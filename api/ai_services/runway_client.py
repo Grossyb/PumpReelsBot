@@ -3,7 +3,7 @@
 # import config
 # from ai_services.video_generator import VideoGenerator
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 class RunwayClient(VideoGenerator):
     """
