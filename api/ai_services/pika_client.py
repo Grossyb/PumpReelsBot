@@ -7,7 +7,7 @@ class PikaClient:
         self.base_url = 'https://devapi.pika.art'
 
 
-    def generate_video(image_file, image_bytes, prompt_text, negative_prompt, duration, resolution):
+    def generate_video(self, image_file, image_bytes, prompt_text, negative_prompt, duration, resolution):
         payload = {
             "promptText": prompt_text,
             "negativePrompt": negative_prompt,
