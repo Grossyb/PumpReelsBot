@@ -91,6 +91,7 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
         try:
             # Fetch current status info
             video = pika_client.check_video_status(video_id=video_id)
+            logger.info(video)
             status = video.get('status', 'queued')
             progress = video.get('progress', 0)
             url = video.get('url', '')
