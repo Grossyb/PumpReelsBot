@@ -188,7 +188,7 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
     except Exception as e:
         logger.error("Error generating video: %s", e)
 
-    Delete previous bot messages.
+    # Delete previous bot messages.
     message_keys = [
         "inline_button_message_id",
         "image_prompt_message_id",
