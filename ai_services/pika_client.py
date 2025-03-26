@@ -25,5 +25,15 @@ class PikaClient:
 
         response = requests.post(url, data=payload, headers=headers, files=files)
 
-        print(response.json())
         return response.json
+
+
+    def check_video_status(self, video_id):
+        url = f"{self.base_url}/videos/{video_id}"
+        headers = {
+            "X-API-KEY": self.api_key,
+            "Accept": "application/json"
+        }
+
+        response = requests.get(url, headers=headers)
+        return response.json()

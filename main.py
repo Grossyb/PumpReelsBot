@@ -1,4 +1,5 @@
 import os
+import io
 import asyncio
 import aiofiles
 import logging
@@ -7,7 +8,8 @@ import base64
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from runwayml import AsyncRunwayML
-from FirestoreClient import FirestoreClient
+from storage.firestore_client import FirestoreClient
+from storage.gcs_client import GCSClient
 from ai_services.pika_client import PikaClient
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ForceReply
 from telegram.ext import (
@@ -42,6 +44,12 @@ RADOM_WEBHOOK_KEY = 'MGUyZTRmZDAtYzJjMi00MmRlLWEwMGQtMzk1YzlkZDgxZTkxNmYxNWYwMWM
 RUNWAYML_API_KEY = 'key_d4728236e61592e41cca7b9365c1cb15dab94fe5f83ed8f64fd98f186a4b5df796a763ed54951c560eaaac8c3798197c4118d6ad39fa07d559666eb71830c243'
 client = AsyncRunwayML(api_key=RUNWAYML_API_KEY)
 firestore_client = FirestoreClient()
+
+gcs_client = GCSClient(bucket_name="pumpreels_files")
+files = {
+    "image": ("image.jpg", image, "image/jpeg")
+}
+
 pika_client = PikaClient()
 
 # Get the Telegram token (hardcoded for testing)
@@ -85,21 +93,21 @@ def handle_new_group_update(update_json):
     else:
         print("New bot added is not PumpReelsBot. No action taken.")
 
-async def get_video_url(task_id: str) -> str:
+async def get_video_url(video_id: str) -> str:
     while True:
         try:
-            task = await client.tasks.retrieve(id=task_id)
-            task_dict = task.to_dict()
-            status = task_dict.get('status')
-            output = task_dict.get('output')
-            if status == 'SUCCEEDED':
-                if output and len(output) > 0:
-                    return output[0]
+            video = pika_client.check_video_status(video_id=video_id)
+            video_dict = video.to_dict()
+            status = video_dict.get('status')
+            url = video_dict.get('output')
+            if status == 'finished':
+                if url and len(url) > 0:
+                    return url
                 else:
-                    logger.error("Task succeeded but no output found: %s", task)
+                    logger.error("Video succeeded but no output found: %s", video)
                     return None
-            elif status in ['FAILED', 'CANCELED']:
-                logger.error("Task failed or was canceled: %s", task)
+            elif status in ['failed', 'canceled']: # MARK: FIX THIS
+                logger.error("Task failed or was canceled: %s", video)
                 return None
             else:
                 # Still pending; log and continue polling.
@@ -126,53 +134,38 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
 
     chat_id = update.effective_chat.id
 
-    with open('rendering.gif', 'rb') as gif_file:
-        processing_msg = await application.bot.send_animation(
-            chat_id=chat_id,
-            animation=gif_file,
-            caption="Rendering your video..."
-        )
+    gif_bytes = gcs_client.download_file("assets/rendering.gif")
+    gif_file = io.BytesIO(gif_bytes)
+    gif_file.name = "rendering.gif"
 
-    # Download the image using file_id.
+    processing_msg = await application.bot.send_animation(
+        chat_id=chat_id,
+        animation=gif_file,
+        caption="Rendering your video..."
+    )
+
     file_id = context.user_data.get("file_id")
     file_obj = await application.bot.get_file(file_id)
-    temp_file_path = f"/tmp/{file_id}.jpg"
-    await file_obj.download_to_drive(custom_path=temp_file_path)
+    file_bytes = await file_obj.download_as_bytearray()
 
-    # Read and encode the image as a base64 data URI.
-    try:
-        with open(temp_file_path, "rb") as image_file:
-            image_bytes = image_file.read()
-            base64_encoded = base64.b64encode(image_bytes).decode("utf-8")
-            # Assuming a JPEG image; adjust MIME type if needed.
-            data_uri = f"data:image/jpeg;base64,{base64_encoded}"
-    except Exception as e:
-        logger.error("Error encoding image to base64: %s", e)
-        data_uri = None
+    image_io = io.BytesIO(file_bytes)
+    image_io.name = "image.jpg"
+    image_file = ("image.jpg", image_io, "image/jpeg")
 
     video_url = None
-    if data_uri:
-        try:
-            video_result = await client.image_to_video.create(
-                model="gen3a_turbo",
-                prompt_image=data_uri,
-                prompt_text=prompt_text,
-                duration=5
-            )
-            task_id = video_result.id
-            logger.info("RunwayML task started with id: %s", task_id)
-            video_url = await get_video_url(task_id)
-        except Exception as e:
-            logger.error("Error generating video: %s", e)
-    else:
-        logger.error("No valid data URI for the image.")
-
-    # Remove the temporary file.
     try:
-        os.remove(temp_file_path)
-        logger.info("Deleted temporary file: %s", temp_file_path)
+        pika_result = pika_client.generate_video(
+            image=image_file,
+            prompt_text=prompt_text,
+            negative_prompt='blurry, low quality',
+            duration=5,
+            resolution=1080
+        )
+        video_id = pika_result.id
+        logger.info("Video started with id: %s", video_id)
+        video_url = await get_video_url(video_id)
     except Exception as e:
-        logger.error("Error deleting temporary file: %s", e)
+        logger.error("Error generating video: %s", e)
 
     # Delete previous bot messages.
     message_keys = [
