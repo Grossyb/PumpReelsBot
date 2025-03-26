@@ -85,39 +85,54 @@ def handle_new_group_update(update_json):
     else:
         print("New bot added is not PumpReelsBot. No action taken.")
 
+
 async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
     while True:
         try:
+            # Fetch current status info
             video = pika_client.check_video_status(video_id=video_id)
-            status = video.get('status')
-            progress = video.get('progress')
-            logger.info('Pika Video Status: {}'.format(status))
-            url = video.get('url')
-            logger.info('Pika Video Output: {}'.format(url))
+            status = video.get('status', 'queued')
+            progress = video.get('progress', 0)
+            url = video.get('url', '')
 
-            if progress % 5 == 0:
-                await application.bot.edit_message_caption(
-                    chat_id=chat_id,
-                    message_id=message_id,
-                    caption=f"Rendering your video... {progress}%"
-                )
+            logger.info("Pika Video Status: %s", status)
+            logger.info("Pika Video Output: %s", url)
 
-            if status == 'finished':
+            # Handle different statuses
+            if status in ['queued', 'pending']:
+                # Not started yet, just keep polling
+                logger.info("Task is in '%s' state. Waiting for it to start...", status)
+
+            elif status == 'started':
+                # Task has started: optionally update Telegram about progress
+                if progress % 5 == 0:
+                    await application.bot.edit_message_caption(
+                        chat_id=chat_id,
+                        message_id=message_id,
+                        caption=f"Rendering your video... {progress}%"
+                    )
+
+            elif status == 'finished':
+                # All done, return URL if found
                 if url and len(url) > 0:
                     return url
                 else:
                     logger.error("Video succeeded but no output found: %s", video)
                     return None
-            elif status in ['failed', 'canceled']: # MARK: FIX THIS
+
+            elif status in ['failed', 'canceled']:
                 logger.error("Task failed or was canceled: %s", video)
                 return None
+
             else:
-                # Still pending; log and continue polling.
-                logger.info("Task status is '%s'. Waiting for it to succeed...", status)
+                # Handle unexpected status values with a log
+                logger.info("Task status is '%s'. Waiting...", status)
+
         except Exception as e:
             logger.error("Error retrieving task: %s", e)
             return None
 
+        # Sleep briefly before polling again
         await asyncio.sleep(1)
 
 # ------------------
