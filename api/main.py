@@ -85,15 +85,24 @@ def handle_new_group_update(update_json):
     else:
         print("New bot added is not PumpReelsBot. No action taken.")
 
-async def get_video_url(video_id: str) -> str:
+async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
     while True:
         try:
             video = pika_client.check_video_status(video_id=video_id)
             video_dict = video.to_dict()
             status = video_dict.get('status')
+            progress = video_dict.get('progress')
             logger.info('Pika Video Status: {}'.format(status))
             url = video_dict.get('output')
             logger.info('Pika Video Output: {}'.format(output))
+
+            if progress % 5 == 0:
+                await application.bot.edit_message_caption(
+                    chat_id=chat_id,
+                    message_id=message_id,
+                    caption=f"Rendering your video... {progress}%"
+                )
+
             if status == 'finished':
                 if url and len(url) > 0:
                     return url
@@ -138,6 +147,9 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
         caption="Rendering your video..."
     )
 
+    msg_chat_id = processing_msg.chat.id
+    msg_id = processing_msg.message_id
+
     file_id = context.user_data.get("file_id")
     file_obj = await application.bot.get_file(file_id)
     file_bytes = await file_obj.download_as_bytearray()
@@ -158,7 +170,7 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
         pika_dict = pika_result.to_dict()
         video_id = pika_dict.get(id, '')
         logger.info("Video started with id: %s", video_id)
-        video_url = await get_video_url(video_id)
+        video_url = await get_video_url(video_id, msg_chat_id, msg_id)
     except Exception as e:
         logger.error("Error generating video: %s", e)
 
