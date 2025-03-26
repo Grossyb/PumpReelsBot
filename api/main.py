@@ -92,8 +92,8 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
             status = video.get('status')
             progress = video.get('progress')
             logger.info('Pika Video Status: {}'.format(status))
-            url = video.get('output')
-            logger.info('Pika Video Output: {}'.format(output))
+            url = video.get('url')
+            logger.info('Pika Video Output: {}'.format(url))
 
             if progress % 5 == 0:
                 await application.bot.edit_message_caption(
