@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from runwayml import AsyncRunwayML
 from storage.firestore_client import FirestoreClient
-from storage.gcs_client imbport GCSClient
+from storage.gcs_client import GCSClient
 from ai_services.pika_client import PikaClient
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ForceReply
 from telegram.ext import (
