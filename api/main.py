@@ -89,11 +89,10 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
     while True:
         try:
             video = pika_client.check_video_status(video_id=video_id)
-            video_dict = video.to_dict()
-            status = video_dict.get('status')
-            progress = video_dict.get('progress')
+            status = video.get('status')
+            progress = video.get('progress')
             logger.info('Pika Video Status: {}'.format(status))
-            url = video_dict.get('output')
+            url = video.get('output')
             logger.info('Pika Video Output: {}'.format(output))
 
             if progress % 5 == 0:
@@ -167,8 +166,7 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
             duration=5,
             resolution=1080
         )
-        pika_dict = pika_result.to_dict()
-        video_id = pika_dict.get(id, '')
+        video_id = pika_result.get(id, '')
         logger.info("Video started with id: %s", video_id)
         video_url = await get_video_url(video_id, msg_chat_id, msg_id)
     except Exception as e:
