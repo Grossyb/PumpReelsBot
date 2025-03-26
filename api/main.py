@@ -43,10 +43,6 @@ prompt_templates = {
 firestore_client = FirestoreClient()
 
 gcs_client = GCSClient(bucket_name="pumpreels_files")
-files = {
-    "image": ("image.jpg", image, "image/jpeg")
-}
-
 pika_client = PikaClient()
 
 TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN')
