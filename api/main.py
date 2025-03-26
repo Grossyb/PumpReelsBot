@@ -142,12 +142,12 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
 
     image_io = io.BytesIO(file_bytes)
     image_io.name = "image.jpg"
-    image_file = ("image.jpg", image_io, "image/jpeg")
 
     video_url = None
     try:
         pika_result = pika_client.generate_video(
-            image=image_file,
+            image_file="image.jpg",
+            image_bytes=image_io,
             prompt_text=prompt_text,
             negative_prompt='blurry, low quality',
             duration=5,
