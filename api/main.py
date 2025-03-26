@@ -180,7 +180,7 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
             prompt_text=prompt_text,
             negative_prompt='blurry, low quality',
             duration=5,
-            resolution=1080
+            resolution='1080p'
         )
         logger.info(pika_result)
         logger.info("========== JON SNOW ==========")
