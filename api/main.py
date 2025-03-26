@@ -91,7 +91,9 @@ async def get_video_url(video_id: str) -> str:
             video = pika_client.check_video_status(video_id=video_id)
             video_dict = video.to_dict()
             status = video_dict.get('status')
+            logger.info('Pika Video Status: {}'.format(status))
             url = video_dict.get('output')
+            logger.info('Pika Video Output: {}'.format(output))
             if status == 'finished':
                 if url and len(url) > 0:
                     return url
@@ -182,7 +184,7 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
     #     logger.error("Failed to delete processing message (%s): %s", processing_msg.message_id, e)
 
     # Send the final video or an error message.
-    
+
     if video_url:
         await application.bot.send_video(chat_id=chat_id, video=video_url, caption="Your AI-generated video is ready!")
     else:
