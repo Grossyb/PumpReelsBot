@@ -31,9 +31,9 @@ logger = logging.getLogger(__name__)
 IMAGE, PROMPT_TEMPLATES, PROMPT = range(3)
 
 prompt_templates = {
-    "TO THE MOON": "Documentary footage. The image is in the cockpit of a spacecraft, pressing buttons and gazing out at the Moon through the window.",
-    "WEN LAMBO": "The image is driving a fast-paced, meme-worthy animation featuring a luxury sports car speeding down a neon-lit highway, crypto gains flashing on a futuristic dashboard.",
-    "WAGMI": "The image, dressed in a sharp black suit with a tie, is seated comfortably in a plush business class private jet seat. The image is holding a glass of champagne in one hand, looking directly at the camera with a happy expression. The cabin features a sleek and luxurious interior with soft lighting and a window view showing clouds outside. The tray table is neatly set, adding an air of sophistication and travel elegance to the scene.",
+    "TO THE MOON": "Cockpit of a spacecraft, gazing out at the Moon through the window.",
+    "WEN LAMBO": "Driving a red lamborghini down Miami Soutch beach, luxurious background",
+    "WAGMI": "Dressed in a sharp black suit with a tie, sitting in a business class private jet.",
 }
 
 
