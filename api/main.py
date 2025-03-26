@@ -160,27 +160,29 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
         logger.error("Error generating video: %s", e)
 
     # Delete previous bot messages.
-    message_keys = [
-        "inline_button_message_id",
-        "image_prompt_message_id",
-        "prompt_templates_message_id",
-        "prompt_prompt_message_id"
-    ]
-    for key in message_keys:
-        message_id = context.user_data.get(key)
-        if message_id:
-            try:
-                await application.bot.delete_message(chat_id=chat_id, message_id=message_id)
-                logger.info("Deleted bot message %s: %s", key, message_id)
-            except Exception as e:
-                logger.error("Failed to delete bot message %s (%s): %s", key, message_id, e)
-    try:
-        await application.bot.delete_message(chat_id=chat_id, message_id=processing_msg.message_id)
-        logger.info("Deleted processing message: %s", processing_msg.message_id)
-    except Exception as e:
-        logger.error("Failed to delete processing message (%s): %s", processing_msg.message_id, e)
+    # message_keys = [
+    #     "inline_button_message_id",
+    #     "image_prompt_message_id",
+    #     "prompt_templates_message_id",
+    #     "prompt_prompt_message_id"
+    # ]
+    # for key in message_keys:
+    #     message_id = context.user_data.get(key)
+    #     if message_id:
+    #         try:
+    #             await application.bot.delete_message(chat_id=chat_id, message_id=message_id)
+    #             logger.info("Deleted bot message %s: %s", key, message_id)
+    #         except Exception as e:
+    #             logger.error("Failed to delete bot message %s (%s): %s", key, message_id, e)
+
+    # try:
+    #     await application.bot.delete_message(chat_id=chat_id, message_id=processing_msg.message_id)
+    #     logger.info("Deleted processing message: %s", processing_msg.message_id)
+    # except Exception as e:
+    #     logger.error("Failed to delete processing message (%s): %s", processing_msg.message_id, e)
 
     # Send the final video or an error message.
+    
     if video_url:
         await application.bot.send_video(chat_id=chat_id, video=video_url, caption="Your AI-generated video is ready!")
     else:
