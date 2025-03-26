@@ -1,7 +1,7 @@
 # from runwayml import AsyncRunwayML
 # import logging
 # import config
-# from ai_services.video_generator import VideoGenerator
+from ai_services.video_generator import VideoGenerator
 
 # logger = logging.getLogger(__name__)
 
