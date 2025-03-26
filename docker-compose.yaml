@@ -1,0 +1,12 @@
+version: "1"
+services:
+  api:
+    image: us-central1-docker.pkg.dev/pumpreels/pumpreels-bot/python-bot
+    build:
+      context: .
+    env_file:
+      - .env
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./pumpreels_service_key.json:/secrets/pumpreels/pumpreels_service_key.json
