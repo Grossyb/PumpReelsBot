@@ -5,11 +5,10 @@ import firebase_admin
 
 class FirestoreClient:
     def __init__(self):
-        # cred = credentials.Certificate('/secrets/PumpReels/pumpreels_service_key.json')
         if not firebase_admin._apps:
-            cred = credentials.Certificate('./pumpreels_service_key.json')
+            cred = credentials.Certificate('/secrets/pumpreels/pumpreels_service_key.json')
             initialize_app(cred)
-            
+
         # self.bucket = storage.bucket()
 
         self.db = firestore.client()
