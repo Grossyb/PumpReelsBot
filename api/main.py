@@ -106,12 +106,11 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
 
             elif status == 'started':
                 # Task has started: optionally update Telegram about progress
-                if progress % 5 == 0:
-                    await application.bot.edit_message_caption(
-                        chat_id=chat_id,
-                        message_id=message_id,
-                        caption=f"Rendering your video... {progress}%"
-                    )
+                await application.bot.edit_message_caption(
+                    chat_id=chat_id,
+                    message_id=message_id,
+                    caption=f"Rendering your video... {progress}%"
+                )
 
             elif status == 'finished':
                 # All done, return URL if found
@@ -159,7 +158,7 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
     processing_msg = await application.bot.send_animation(
         chat_id=chat_id,
         animation=gif_file,
-        caption="Rendering your video..."
+        caption="Your video is in queue..."
     )
 
     msg_chat_id = processing_msg.chat.id
