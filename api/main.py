@@ -182,6 +182,8 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
             duration=5,
             resolution=1080
         )
+        logger.info(pika_result)
+        logger.info("========== JON SNOW ==========")
         video_id = pika_result.get('video_id', '')
         logger.info("Video started with id: %s", video_id)
         video_url = await get_video_url(video_id, msg_chat_id, msg_id)
