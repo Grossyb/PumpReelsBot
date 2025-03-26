@@ -97,7 +97,7 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
             url = video.get('url', '')
 
             logger.info("Pika Video Status: %s", status)
-            logger.info("Pika Video Output: %s", url)
+            logger.info("Pika Video URL: %s", url)
 
             # Handle different statuses
             if status in ['queued', 'pending']:
@@ -182,33 +182,33 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
             duration=5,
             resolution=1080
         )
-        video_id = pika_result.get(id, '')
+        video_id = pika_result.get('video_id', '')
         logger.info("Video started with id: %s", video_id)
         video_url = await get_video_url(video_id, msg_chat_id, msg_id)
     except Exception as e:
         logger.error("Error generating video: %s", e)
 
-    # Delete previous bot messages.
-    # message_keys = [
-    #     "inline_button_message_id",
-    #     "image_prompt_message_id",
-    #     "prompt_templates_message_id",
-    #     "prompt_prompt_message_id"
-    # ]
-    # for key in message_keys:
-    #     message_id = context.user_data.get(key)
-    #     if message_id:
-    #         try:
-    #             await application.bot.delete_message(chat_id=chat_id, message_id=message_id)
-    #             logger.info("Deleted bot message %s: %s", key, message_id)
-    #         except Exception as e:
-    #             logger.error("Failed to delete bot message %s (%s): %s", key, message_id, e)
+    Delete previous bot messages.
+    message_keys = [
+        "inline_button_message_id",
+        "image_prompt_message_id",
+        "prompt_templates_message_id",
+        "prompt_prompt_message_id"
+    ]
+    for key in message_keys:
+        message_id = context.user_data.get(key)
+        if message_id:
+            try:
+                await application.bot.delete_message(chat_id=chat_id, message_id=message_id)
+                logger.info("Deleted bot message %s: %s", key, message_id)
+            except Exception as e:
+                logger.error("Failed to delete bot message %s (%s): %s", key, message_id, e)
 
-    # try:
-    #     await application.bot.delete_message(chat_id=chat_id, message_id=processing_msg.message_id)
-    #     logger.info("Deleted processing message: %s", processing_msg.message_id)
-    # except Exception as e:
-    #     logger.error("Failed to delete processing message (%s): %s", processing_msg.message_id, e)
+    try:
+        await application.bot.delete_message(chat_id=chat_id, message_id=processing_msg.message_id)
+        logger.info("Deleted processing message: %s", processing_msg.message_id)
+    except Exception as e:
+        logger.error("Failed to delete processing message (%s): %s", processing_msg.message_id, e)
 
     # Send the final video or an error message.
 
