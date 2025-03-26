@@ -155,7 +155,8 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
             duration=5,
             resolution=1080
         )
-        video_id = pika_result.id
+        pika_dict = pika_result.to_dict()
+        video_id = pika_dict.get(id, '')
         logger.info("Video started with id: %s", video_id)
         video_url = await get_video_url(video_id)
     except Exception as e:

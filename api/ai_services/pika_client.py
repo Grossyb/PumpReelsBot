@@ -26,7 +26,7 @@ class PikaClient:
 
         response = requests.post(url, data=payload, headers=headers, files=files)
 
-        return response.json
+        return response.json.json()
 
 
     def check_video_status(self, video_id):
