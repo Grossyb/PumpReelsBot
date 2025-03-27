@@ -106,12 +106,12 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
 
             elif status == 'started':
                 # Task has started: optionally update Telegram about progress
-                await application.bot.edit_message_caption(
-                    chat_id=chat_id,
-                    message_id=message_id,
-                    caption=f"Rendering your video... {progress}%"
-                )
-
+                # if progress % 2 == 0:
+                #     await application.bot.edit_message_caption(
+                #         chat_id=chat_id,
+                #         message_id=message_id,
+                #         caption=f"Rendering your video... {progress}%"
+                #     )
             elif status == 'finished':
                 logger.info(video)
                 url = video.get('url', '')
@@ -135,7 +135,7 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
             return None
 
         # Sleep briefly before polling again
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.1)
 
 # ------------------
 # Helper function to process the video generation.
