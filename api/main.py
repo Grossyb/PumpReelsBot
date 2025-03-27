@@ -105,6 +105,7 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
                 logger.info("Task is in '%s' state. Waiting for it to start...", status)
 
             elif status == 'started':
+                logger.info("Task {} with {} percent".format(status, percent))
                 # Task has started: optionally update Telegram about progress
                 # if progress % 2 == 0:
                 #     await application.bot.edit_message_caption(
