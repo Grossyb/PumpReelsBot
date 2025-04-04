@@ -99,6 +99,7 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
             logger.info(video)
             status = video.get('status', 'queued')
             progress = video.get('progress', 0)
+            old_progress = 0
             url = video.get('url', '')
 
             logger.info("Pika Video Status: %s", status)
@@ -112,11 +113,13 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
             elif status == 'started':
                 logger.info("Task {} with {}% progress".format(status, progress))
                 # Task has started: optionally update Telegram about progress
-                await application.bot.edit_message_caption(
-                    chat_id=chat_id,
-                    message_id=message_id,
-                    caption=f"Rendering your video... {progress}%"
-                )
+                if old_progress != progress:
+                    await application.bot.edit_message_caption(
+                        chat_id=chat_id,
+                        message_id=message_id,
+                        caption=f"Rendering your video... {old_progress}%"
+                    )
+                old_progress = progress
             elif status == 'finished':
                 logger.info(video)
                 url = video.get('url', '')
