@@ -1,5 +1,6 @@
 import os
 import io
+import time
 import asyncio
 import aiofiles
 import logging
@@ -31,9 +32,9 @@ logger = logging.getLogger(__name__)
 IMAGE, PROMPT_TEMPLATES, PROMPT = range(3)
 
 prompt_templates = {
-    "TO THE MOON": "Documentary footage. The image is in the cockpit of a spacecraft, pressing buttons and gazing out at the Moon through the window.",
-    "WEN LAMBO": "The image is driving a fast-paced, meme-worthy animation featuring a luxury sports car speeding down a neon-lit highway, crypto gains flashing on a futuristic dashboard.",
-    "WAGMI": "The image, dressed in a sharp black suit with a tie, is seated comfortably in a plush business class private jet seat. The image is holding a glass of champagne in one hand, looking directly at the camera with a happy expression. The cabin features a sleek and luxurious interior with soft lighting and a window view showing clouds outside. The tray table is neatly set, adding an air of sophistication and travel elegance to the scene.",
+    "TO THE MOON": "It is in the cockpit of a spacecraft, pressing buttons and gazing out at the Moon through the window",
+    "WEN LAMBO": "It is driving red lamborghini down a road in South Beach, sunny, luxurious background",
+    "WAGMI": "It is dressed in a black suit with a tie, sitting in private jet seat next to window. Champagne on table, luxurious interior",
 }
 
 
@@ -89,7 +90,9 @@ def handle_new_group_update(update_json):
 
 
 async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
-    while True:
+    start_time = time.monotonic()
+    max_wait_seconds = 300  # 5 minutes
+    while time.monotonic() - start_time < max_wait_seconds:
         try:
             # Fetch current status info
             video = pika_client.check_video_status(video_id=video_id)
@@ -138,7 +141,7 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
             return None
 
         # Sleep briefly before polling again
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.5)
 
 # ------------------
 # Helper function to process the video generation.
