@@ -79,13 +79,13 @@ def handle_new_group_update(update_json):
     # Check if this is our bot (PumpReelsBot)
     username = new_chat_participant.get('username')
     # MARK: CHANGE THIS to PumpReelsBot
-    if username == 'PumpReelsBot':
+    if username == 'pumpreelsbot':
         group = message.get('chat')
         # Add the group to Firestore using your client
         doc_id = firestore_client.create_group(data=group)
         logger.info("Group added to Firestore:", doc_id)
     else:
-        logger.info("New bot added is not PumpReelsBot. No action taken.")
+        logger.info("New bot added is not pumpreelsbot. No action taken.")
 
 
 async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
