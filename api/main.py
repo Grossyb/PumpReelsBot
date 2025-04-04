@@ -62,6 +62,8 @@ def handle_new_group_update(update_json):
       update_json (dict): The update payload from Telegram.
     """
     message = update_json.get('message')
+    logger.info('TYRION LANNISTER')
+    logger.info(message)
     if not message:
         return  # No message, nothing to do
 
@@ -81,9 +83,9 @@ def handle_new_group_update(update_json):
         group = message.get('chat')
         # Add the group to Firestore using your client
         doc_id = firestore_client.create_group(data=group)
-        print("Group added to Firestore:", doc_id)
+        logger.info("Group added to Firestore:", doc_id)
     else:
-        print("New bot added is not PumpReelsBot. No action taken.")
+        logger.info("New bot added is not PumpReelsBot. No action taken.")
 
 
 async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
@@ -191,29 +193,28 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
         logger.error("Error generating video: %s", e)
 
     # Delete previous bot messages.
-    # message_keys = [
-    #     "inline_button_message_id",
-    #     "image_prompt_message_id",
-    #     "prompt_templates_message_id",
-    #     "prompt_prompt_message_id"
-    # ]
-    # for key in message_keys:
-    #     message_id = context.user_data.get(key)
-    #     if message_id:
-    #         try:
-    #             await application.bot.delete_message(chat_id=chat_id, message_id=message_id)
-    #             logger.info("Deleted bot message %s: %s", key, message_id)
-    #         except Exception as e:
-    #             logger.error("Failed to delete bot message %s (%s): %s", key, message_id, e)
-    #
-    # try:
-    #     await application.bot.delete_message(chat_id=chat_id, message_id=processing_msg.message_id)
-    #     logger.info("Deleted processing message: %s", processing_msg.message_id)
-    # except Exception as e:
-    #     logger.error("Failed to delete processing message (%s): %s", processing_msg.message_id, e)
+    message_keys = [
+        "inline_button_message_id",
+        "image_prompt_message_id",
+        "prompt_templates_message_id",
+        "prompt_prompt_message_id"
+    ]
+    for key in message_keys:
+        message_id = context.user_data.get(key)
+        if message_id:
+            try:
+                await application.bot.delete_message(chat_id=chat_id, message_id=message_id)
+                logger.info("Deleted bot message %s: %s", key, message_id)
+            except Exception as e:
+                logger.error("Failed to delete bot message %s (%s): %s", key, message_id, e)
+
+    try:
+        await application.bot.delete_message(chat_id=chat_id, message_id=processing_msg.message_id)
+        logger.info("Deleted processing message: %s", processing_msg.message_id)
+    except Exception as e:
+        logger.error("Failed to delete processing message (%s): %s", processing_msg.message_id, e)
 
     # Send the final video or an error message.
-
     logger.info(video_url)
     logger.info("CERSEI")
     if video_url:
@@ -295,7 +296,7 @@ async def pumpreels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         group_data = firestore_client.get_group(str(chat_id))
 
         if group_data is None:
-            await update.message.reply_text("Your group is not registered. Please contact admin.")
+            await update.message.reply_text("Your group is not registered. Please contact PumpReels for help.")
             return ConversationHandler.END
 
         credits = group_data.get('credits', 0)
