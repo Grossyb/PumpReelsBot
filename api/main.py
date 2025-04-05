@@ -39,6 +39,8 @@ prompt_templates = {
 }
 
 
+VIDEO_CREDITS = 50
+
 # RADOM_TEST_KEY = os.environ.get('RADOM_TEST_KEY')
 # RADOM_WEBHOOK_KEY = os.environ.get('RADOM_WEBHOOK_KEY')
 
@@ -310,12 +312,12 @@ async def pumpreels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
         credits = group_data.get('credits', 0)
 
-        if credits == 0:
+        if credits == 0 or credits < VIDEO_CREDITS:
             keyboard = [[InlineKeyboardButton("Buy Credits", callback_data="buy_credits")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
 
             await update.message.reply_text(
-                "Your group has no credits left. Please purchase more credits to continue.",
+                f"Your group has {credits} credits left. Please purchase more credits to continue.",
                 reply_markup=reply_markup
             )
             return ConversationHandler.END

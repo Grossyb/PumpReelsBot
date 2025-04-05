@@ -37,3 +37,20 @@ class FirestoreClient:
             return doc.to_dict()
 
         return None
+
+
+     def decrement_credits(self, group_id, amount) -> None:
+        doc_ref = self.group_collection.document(group_id)
+
+        def transaction_decrement(transaction, ref):
+            snapshot = ref.get(transaction=transaction)
+            if not snapshot.exists:
+                # Document does not exist; no action or create with zero credits if needed
+                # Optional: transaction.set(ref, {"credits": 0})
+                return
+
+            current_credits = snapshot.get("credits", 0)
+            new_credits = max(current_credits - amount, 0)
+            transaction.update(ref, {"credits": new_credits})
+
+        self.db.run_transaction(lambda t: transaction_decrement(t, doc_ref))
