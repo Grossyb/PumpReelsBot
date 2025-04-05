@@ -99,7 +99,6 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
             logger.info(video)
             status = video.get('status', 'queued')
             progress = video.get('progress', 0)
-            old_progress = 0
             url = video.get('url', '')
 
             logger.info("Pika Video Status: %s", status)
@@ -117,7 +116,7 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
                     await application.bot.edit_message_caption(
                         chat_id=chat_id,
                         message_id=message_id,
-                        caption=f"Rendering your video... {old_progress}%"
+                        caption=f"Rendering your video... {progress}%"
                     )
                 except BadRequest as e:
                     # If the error message is "Message is not modified", ignore it.
