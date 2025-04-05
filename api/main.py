@@ -64,7 +64,6 @@ def handle_new_group_update(update_json):
       update_json (dict): The update payload from Telegram.
     """
     message = update_json.get('message')
-    logger.info('TYRION LANNISTER')
     logger.info(message)
     if not message:
         return  # No message, nothing to do
@@ -228,8 +227,6 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
         logger.error("Failed to delete processing message (%s): %s", processing_msg.message_id, e)
 
     # Send the final video or an error message.
-    logger.info(video_url)
-    logger.info("CERSEI")
     if video_url:
         await application.bot.send_video(chat_id=chat_id, video=video_url, caption="Your AI-generated video is ready!")
     else:
@@ -344,6 +341,9 @@ async def pumpreels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
+    logger.info('GOT BUTTON CALL')
+    logger.info(query)
+    logger.info('==========')
     await query.answer()
     user_identifier = query.from_user.username or query.from_user.first_name
     msg = await query.message.reply_text(
@@ -423,7 +423,7 @@ async def receive_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.message:
-        await update.message.reply_text("Operation cancelled.")
+        await update.message.reply_text("Video cancelled.")
     return ConversationHandler.END
 
 # ------------------
