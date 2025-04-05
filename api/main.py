@@ -200,7 +200,7 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
     # Delete previous bot messages.
     message_keys = [
         "inline_button_message_id",
-        "image_prompt_message_id",
+        # "image_prompt_message_id",
         "prompt_templates_message_id",
         "prompt_prompt_message_id"
     ]
