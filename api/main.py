@@ -393,11 +393,12 @@ async def receive_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 async def prompt_templates_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
+    user_identifier = query.from_user.username or query.from_user.first_name
     selected = query.data  # Either "TO THE MOON", "WEN LAMBO", "WAGMI", or "CUSTOM"
     if selected == "CUSTOM":
         # Ask for a custom prompt via ForceReply.
         msg = await query.message.reply_text(
-            "Please type your custom prompt:",
+            f"@{user_identifier}, please type your custom prompt:",
             reply_markup=ForceReply(selective=True, input_field_placeholder="Enter your prompt here")
         )
         context.user_data["prompt_prompt_message_id"] = msg.message_id
