@@ -39,7 +39,7 @@ class FirestoreClient:
         return None
 
 
-     def decrement_credits(self, group_id, amount) -> None:
+     def decrement_credits(self, group_id, amount):
         doc_ref = self.group_collection.document(group_id)
 
         def transaction_decrement(transaction, ref):
