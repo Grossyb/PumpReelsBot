@@ -12,6 +12,7 @@ from storage.firestore_client import FirestoreClient
 from storage.gcs_client import GCSClient
 from ai_services.pika_client import PikaClient
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ForceReply
+from telegram.error import BadRequest
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -112,14 +113,21 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
 
             elif status == 'started':
                 logger.info("Task {} with {}% progress".format(status, progress))
-                # Task has started: optionally update Telegram about progress
-                if old_progress != progress:
+
+                try:
                     await application.bot.edit_message_caption(
                         chat_id=chat_id,
                         message_id=message_id,
                         caption=f"Rendering your video... {old_progress}%"
                     )
-                old_progress = progress
+                except BadRequest as e:
+                    # If the error message is "Message is not modified", ignore it.
+                    # Otherwise, re-raise the exception.
+                    if "Message is not modified" in str(e):
+                        pass
+                    else:
+                        raise e
+
             elif status == 'finished':
                 logger.info(video)
                 url = video.get('url', '')
