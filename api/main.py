@@ -30,7 +30,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Conversation states: IMAGE -> PROMPT_TEMPLATES -> PROMPT
-IMAGE, PROMPT_TEMPLATES, PROMPT = range(3)
+# IMAGE, PROMPT_TEMPLATES, PROMPT = range(3)
+IMAGE, PROMPT = range(3)
 
 prompt_templates = {
     "TO THE MOON": "It is in the cockpit of a spacecraft, pressing buttons and gazing out at the Moon through the window",
@@ -386,7 +387,7 @@ async def receive_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             reply_markup=reply_markup
         )
         context.user_data["prompt_templates_message_id"] = template_msg.message_id
-        return PROMPT_TEMPLATES
+        return PROMPT
     else:
         await update.message.reply_text("That doesn't seem like an image. Please send a valid image.")
         return IMAGE
@@ -406,8 +407,7 @@ async def prompt_templates_callback(update: Update, context: ContextTypes.DEFAUL
         return PROMPT
     else:
         # MARK: DO WE NEED THIS?
-        # context.user_data["prompt"] = prompt_templates[selected]
-        logger.info("THIS IS THE SELECTED PROMPT: %s", prompt_templates[selected])
+
         await process_video(update, context, prompt_text=prompt_templates[selected])
         return ConversationHandler.END
 
