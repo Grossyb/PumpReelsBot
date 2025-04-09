@@ -385,7 +385,7 @@ async def receive_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             except Exception as e:
                 logger.error("Failed to delete image prompt message: %s", e)
 
-        msg = await query.message.reply_text(
+        msg = await update.message.reply_text(
             f"@{user_identifier}, please type your custom prompt:",
             reply_markup=ForceReply(selective=True, input_field_placeholder="Enter your prompt here")
         )
