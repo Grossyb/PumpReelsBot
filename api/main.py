@@ -444,7 +444,7 @@ conv_handler = ConversationHandler(
     entry_points=[CallbackQueryHandler(button_callback, pattern="^generate_video$")],
     states={
         IMAGE: [MessageHandler(filters.PHOTO, receive_image)],
-        PROMPT_TEMPLATES: [CallbackQueryHandler(prompt_templates_callback, pattern="^(TO THE MOON|WEN LAMBO|WAGMI|CUSTOM)$")],
+        # PROMPT_TEMPLATES: [CallbackQueryHandler(prompt_templates_callback, pattern="^(TO THE MOON|WEN LAMBO|WAGMI|CUSTOM)$")], FIX THIS
         PROMPT: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_prompt)],
     },
     fallbacks=[CommandHandler("cancel", cancel)],
