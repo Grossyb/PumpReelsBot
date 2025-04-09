@@ -30,8 +30,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Conversation states: IMAGE -> PROMPT_TEMPLATES -> PROMPT
-# IMAGE, PROMPT_TEMPLATES, PROMPT = range(3)
-IMAGE, PROMPT = range(3)
+# IMAGE, PROMPT_TEMPLATES, PROMPT = range(3) FIX THIS
+IMAGE, PROMPT = range(2)
 
 prompt_templates = {
     "TO THE MOON": "It is in the cockpit of a spacecraft, pressing buttons and gazing out at the Moon through the window",
@@ -343,10 +343,19 @@ async def pumpreels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
-    logger.info('GOT BUTTON CALL')
-    logger.info(query)
-    logger.info('==========')
-    await query.answer()
+
+    try:
+        await query.answer()
+    except BadRequest as e:
+        if "Query is too old" in str(e):
+            await context.bot.send_message(
+                chat_id=query.message.chat_id,
+                text="This thread has expired. Please try again."
+            )
+            return
+        else:
+            raise
+
     user_identifier = query.from_user.username or query.from_user.first_name
     msg = await query.message.reply_text(
         f"@{user_identifier}, please reply to this message with an image from your camera roll.",
