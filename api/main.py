@@ -367,13 +367,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 async def receive_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_chat.id
     if update.message and update.message.photo:
-
-        logger.info(update)
-        logger.info("GROSSNICKLE")
-
-        query = update.callback_query
-        await query.answer()
-        user_identifier = query.from_user.username or query.from_user.first_name
+        user_identifier = update.message.from_user.username or update.message.from_user.first_name
 
         photo = update.message.photo[-1]
         file_id = photo.file_id
