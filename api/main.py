@@ -368,6 +368,9 @@ async def receive_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     chat_id = update.effective_chat.id
     if update.message and update.message.photo:
 
+        logger.info(update)
+        logger.info("GROSSNICKLE")
+
         query = update.callback_query
         await query.answer()
         user_identifier = query.from_user.username or query.from_user.first_name
