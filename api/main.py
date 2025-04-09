@@ -196,7 +196,7 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
             image_file="image.jpg",
             image_bytes=image_io,
             prompt_text=prompt_text,
-            negative_prompt='blurry, low quality',
+            negative_prompt='blurry, low quality, distorted, warped, deformed, color shifted, miscolored, incomplete subject, missing subject, cropped subject',
             duration=5,
             resolution='720p'
         )
@@ -426,9 +426,6 @@ async def receive_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     then calls process_video to generate the video.
     """
     prompt_text = update.message.text
-    logger.info("THIS IS THE SELECTED PROMPT: %s", prompt_text)
-    # MARK: DO WE NEED THIS?
-    # context.user_data["prompt"] = prompt_text
     await process_video(update, context, prompt_text=prompt_text)
     return ConversationHandler.END
 
