@@ -367,6 +367,11 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 async def receive_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_chat.id
     if update.message and update.message.photo:
+
+        query = update.callback_query
+        await query.answer()
+        user_identifier = query.from_user.username or query.from_user.first_name
+
         photo = update.message.photo[-1]
         file_id = photo.file_id
         context.user_data["file_id"] = file_id
@@ -383,20 +388,27 @@ async def receive_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             except Exception as e:
                 logger.error("Failed to delete image prompt message: %s", e)
 
-        # Send inline keyboard with prompt templates (2x2 grid)
-        keyboard = [
-            [InlineKeyboardButton("TO THE MOON", callback_data="TO THE MOON"),
-             InlineKeyboardButton("WEN LAMBO", callback_data="WEN LAMBO")],
-            [InlineKeyboardButton("WAGMI", callback_data="WAGMI"),
-             InlineKeyboardButton("Custom", callback_data="CUSTOM")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        template_msg = await update.message.reply_text(
-            "Choose a prompt template or select Custom for your own prompt:",
-            reply_markup=reply_markup
+        msg = await query.message.reply_text(
+            f"@{user_identifier}, please type your custom prompt:",
+            reply_markup=ForceReply(selective=True, input_field_placeholder="Enter your prompt here")
         )
-        context.user_data["prompt_templates_message_id"] = template_msg.message_id
+        context.user_data["prompt_prompt_message_id"] = msg.message_id
         return PROMPT
+
+        # # Send inline keyboard with prompt templates (2x2 grid)
+        # keyboard = [
+        #     [InlineKeyboardButton("TO THE MOON", callback_data="TO THE MOON"),
+        #      InlineKeyboardButton("WEN LAMBO", callback_data="WEN LAMBO")],
+        #     [InlineKeyboardButton("WAGMI", callback_data="WAGMI"),
+        #      InlineKeyboardButton("Custom", callback_data="CUSTOM")]
+        # ]
+        # reply_markup = InlineKeyboardMarkup(keyboard)
+        # template_msg = await update.message.reply_text(
+        #     "Choose a prompt template or select Custom for your own prompt:",
+        #     reply_markup=reply_markup
+        # )
+        # context.user_data["prompt_templates_message_id"] = template_msg.message_id
+        # return PROMPT
     else:
         await update.message.reply_text("That doesn't seem like an image. Please send a valid image.")
         return IMAGE
