@@ -11,7 +11,7 @@ from fastapi import FastAPI, Request
 from storage.firestore_client import FirestoreClient
 from storage.gcs_client import GCSClient
 from ai_services.pika_client import PikaClient
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ForceReply
+from telegram import Update, InlineKeyboardButton, WebAppInfo, InlineKeyboardMarkup, ForceReply
 from telegram.error import BadRequest
 from telegram.ext import (
     Application,
@@ -170,13 +170,9 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
 
     chat_id = update.effective_chat.id
 
-    gif_bytes = gcs_client.download_file("assets/rendering.gif")
-    gif_file = io.BytesIO(gif_bytes)
-    gif_file.name = "rendering.gif"
-
     processing_msg = await application.bot.send_animation(
         chat_id=chat_id,
-        animation=gif_file,
+        animation="https://comforting-druid-bafd91.netlify.app/rendering.gif",
         caption="Your video is in queue..."
     )
 
@@ -387,41 +383,25 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
 
 
 async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # 1) Grab your local or remote rendering.gif
-    #    Example: If stored in GCS, you can download or you can store a local path.
-    try:
-        gif_bytes = gcs_client.download_file("assets/rendering.gif")
-        gif_file = io.BytesIO(gif_bytes)
-        gif_file.name = "rendering.gif"
-    except Exception as e:
-        logger.error("Failed to load rendering.gif: %s", e)
-        gif_file = None
-
-    # 2) Build an inline keyboard with a link
+    # 1) Build an inline keyboard with a link
     #    Replace the URL with your actual Web App link, for example:
     #    https://t.me/<your_bot_username>?start=someWebappParam
     keyboard = [
         [
             InlineKeyboardButton(
                 "📱Open Mini App",
-                url="https://comforting-druid-bafd91.netlify.app"
+                web_app=WebAppInfo("https://comforting-druid-bafd91.netlify.app")
             )
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    # 3) Send an animation (GIF) + caption
-    #    If you can’t load the GIF, just send a regular text message or a fallback.
-    if gif_file:
-        await update.message.reply_animation(
-            animation=gif_file,
-            caption="Please open the mini app to create your video!",
-            reply_markup=reply_markup
-        )
-    else:
-        await update.message.reply_text(
-            "Please open the mini app to create your video!\n\nhttps://t.me/pumpreelsbot?start=webapp"
-        )
+    # 2) Send an animation (GIF) + caption
+    await update.message.reply_animation(
+        animation="https://comforting-druid-bafd91.netlify.app/rendering.gif",
+        caption="Open the mini app to create your video!",
+        reply_markup=reply_markup
+    )
 
 
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
