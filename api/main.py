@@ -404,7 +404,7 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
         [
             InlineKeyboardButton(
                 "📱Open Mini App",
-                url="https:comforting-druid-bafd91.netlify.app"
+                url="https://comforting-druid-bafd91.netlify.app"
             )
         ]
     ]
