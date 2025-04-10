@@ -341,6 +341,89 @@ async def pumpreels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text("An error occurred. Please try again later.")
         return ConversationHandler.END
 
+
+async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Allows user to create a video by sending `/generate_video my text here` as the caption
+    of an attached photo. If missing image/text, send a fallback with a "rich card" that
+    links to the mini app.
+    """
+    chat_id = update.effective_chat.id
+
+    # 1) Check if user posted a photo.
+    #    If the user typed `/generate_video` + text in a text-only message, there's no photo -> fallback.
+    #    We expect a single message that has BOTH photo + caption (the command plus user text).
+    if not update.message or not update.message.photo:
+        # Missing the photo -> fallback
+        await send_open_mini_app_card(update, context)
+        return
+
+    # 2) Extract the text from the photo caption (where the user typed `/generate_video ...`).
+    #    - update.message.caption might look like "/generate_video my text here"
+    #    - We want to parse out "my text here"
+    caption = update.message.caption or ""  # fallback empty string if somehow missing
+    pieces = caption.split(None, 1)  # split into two parts: command and the rest
+    if len(pieces) < 2:
+        # Means they only typed "/generate_video" with no extra text
+        await send_open_mini_app_card(update, context)
+        return
+
+    # pieces[0] == "/generate_video"
+    # pieces[1] == "my text here"
+    prompt_text = pieces[1].strip()
+    if not prompt_text:
+        # no user text
+        await send_open_mini_app_card(update, context)
+        return
+
+    # 3) We have a photo and the user text -> proceed to process_video
+    #    Same logic as your existing “receive_image” or “process_video” flow
+    photo = update.message.photo[-1]  # the largest resolution photo
+    file_id = photo.file_id
+    context.user_data["file_id"] = file_id
+
+    # Now call process_video with the user prompt
+    await process_video(update, context, prompt_text)
+
+
+async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # 1) Grab your local or remote rendering.gif
+    #    Example: If stored in GCS, you can download or you can store a local path.
+    try:
+        gif_bytes = gcs_client.download_file("assets/rendering.gif")
+        gif_file = io.BytesIO(gif_bytes)
+        gif_file.name = "rendering.gif"
+    except Exception as e:
+        logger.error("Failed to load rendering.gif: %s", e)
+        gif_file = None
+
+    # 2) Build an inline keyboard with a link
+    #    Replace the URL with your actual Web App link, for example:
+    #    https://t.me/<your_bot_username>?start=someWebappParam
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                "📱Open Mini App",
+                url="https:comforting-druid-bafd91.netlify.app"
+            )
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    # 3) Send an animation (GIF) + caption
+    #    If you can’t load the GIF, just send a regular text message or a fallback.
+    if gif_file:
+        await update.message.reply_animation(
+            animation=gif_file,
+            caption="Please open the mini app to create your video!",
+            reply_markup=reply_markup
+        )
+    else:
+        await update.message.reply_text(
+            "Please open the mini app to create your video!\n\nhttps://t.me/pumpreelsbot?start=webapp"
+        )
+
+
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
 
@@ -363,6 +446,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     )
     context.user_data["image_prompt_message_id"] = msg.message_id
     return IMAGE
+
 
 async def receive_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_chat.id
@@ -460,6 +544,7 @@ conv_handler = ConversationHandler(
 
 application.add_handler(CommandHandler("start", start))
 application.add_handler(CommandHandler("pumpreels", pumpreels))
+application.add_handler(CommandHandler("generate_video", generate_video_command))
 application.add_handler(CommandHandler("credits", credits))
 application.add_handler(conv_handler)
 
