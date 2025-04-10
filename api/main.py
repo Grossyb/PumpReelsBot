@@ -381,15 +381,12 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
 
 
 async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # 1) Build an inline keyboard with a link
-    #    Replace the URL with your actual Web App link, for example:
-    #    https://t.me/<your_bot_username>?start=someWebappParam
+    # "/generate_video [your prompt] and attach an image to create your AI video instantly!\n\n"
     caption = (
         "✨ Generate AI videos for your memecoin!\n"
         "Generate your AI Video with our Mini App\n"
         "📱 [Open Mini App](https://t.me/pumpreelsbot/pumpreelsapp)\n\n"
         "OR TYPE\n"
-        "/generate_video [your prompt] and attach an image to create your AI video instantly!\n\n"
         "Powered by @PumpReelsBot"
     )
 
