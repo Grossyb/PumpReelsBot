@@ -386,7 +386,9 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
     #    https://t.me/<your_bot_username>?start=someWebappParam
     caption = (
         "✨ Generate AI videos for your memecoin!\n"
+        "Generate your AI Video with our Mini App\n"
         "📱 [Open Mini App](https://t.me/pumpreelsbot/pumpreelsapp)\n\n"
+        "OR TYPE\n"
         "/generate_video [your prompt] and attach an image to create your AI video instantly!\n\n"
         "Powered by @PumpReelsBot"
     )
