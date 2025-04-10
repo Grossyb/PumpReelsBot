@@ -383,10 +383,11 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
 async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # "/generate_video [your prompt] and attach an image to create your AI video instantly!\n\n"
     caption = (
-        "✨ Generate AI videos for your memecoin!\n"
-        "Generate your AI Video with our Mini App\n"
+        "✨ Generate AI videos for your memecoin\\!\n"
+        "Generate your AI Video with our Mini App\\.\n"
         "📱 [Open Mini App](https://t.me/pumpreelsbot/pumpreelsapp)\n\n"
         "OR TYPE\n"
+        "`/generate_video [your prompt]` and attach an image to create your AI video instantly\\!\n\n"
         "Powered by @PumpReelsBot"
     )
 
@@ -394,7 +395,7 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
     await update.message.reply_animation(
         animation="https://comforting-druid-bafd91.netlify.app/rendering.gif",
         caption=caption,
-        parse_mode="Markdown"
+        parse_mode="MarkdownV2"
     )
 
 
@@ -496,6 +497,29 @@ async def receive_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await process_video(update, context, prompt_text=prompt_text)
     return ConversationHandler.END
 
+
+async def handle_web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    data = update.message.web_app_data.data
+    logger.info(f"Received data from web app: {data}")
+
+    try:
+        payload = json.loads(data)
+        video_url = payload.get("video_url")
+
+        if not video_url:
+            await update.message.reply_text("Something went wrong — no video URL received.")
+            return
+
+        await update.message.reply_video(
+            video=video_url,
+            caption="🎬 Here's your AI-generated video!"
+        )
+
+    except Exception as e:
+        logger.error(f"Error handling web_app_data: {e}")
+        await update.message.reply_text("Error processing video. Please try again.")
+
+
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.message:
         await update.message.reply_text("Video cancelled.")
@@ -528,6 +552,8 @@ application.add_handler(generate_video_handler)
 application.add_handler(CommandHandler("generate_video", generate_video_command))
 application.add_handler(CommandHandler("credits", credits))
 application.add_handler(conv_handler)
+application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_web_app_data))
+
 
 # ------------------
 # FastAPI App with Lifespan Event Handlers
