@@ -223,7 +223,7 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
         caption = f"@{user_identifier} video is ready!\n\n{prompt_text}"
         await application.bot.send_video(chat_id=chat_id, video=video_url, caption=caption)
     else:
-        await application.bot.send_message(chat_id=chat_id, text="Sorry, an error occurred processing your video.")
+        await application.bot.send_message(chat_id=chat_id, text="Sorry, an error occurred while sprocessing your video.")
 
 # ------------------
 # Telegram Handlers (Async)
@@ -387,6 +387,7 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
     caption = (
         "✨ Generate AI videos for your memecoin!\n"
         "📱 [Open Mini App](https://t.me/pumpreelsbot/pumpreelsapp)\n\n"
+        "/generate_video [your prompt] and attach an image to create your AI video instantly!\n\n"
         "Powered by @PumpReelsBot"
     )
 
@@ -523,7 +524,8 @@ generate_video_handler = MessageHandler(
     filters.PHOTO & filters.CaptionRegex(r"^/generate_video\b"),
     generate_video_command
 )
-application.add_handler(CommandHandler(generate_video_handler))
+
+application.add_handler(generate_video_handler)
 application.add_handler(CommandHandler("credits", credits))
 application.add_handler(conv_handler)
 
