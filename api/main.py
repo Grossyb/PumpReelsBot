@@ -390,21 +390,17 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
     # 1) Build an inline keyboard with a link
     #    Replace the URL with your actual Web App link, for example:
     #    https://t.me/<your_bot_username>?start=someWebappParam
-    keyboard = [
-        [
-            InlineKeyboardButton(
-                "📱Open Mini App",
-                web_app=WebAppInfo("https://comforting-druid-bafd91.netlify.app")
-            )
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    caption = (
+        "✨ Generate AI videos for your memecoin!\n"
+        "📱 [Open Mini App](https://t.me/PumpReelsBot?startapp=create)\n\n"
+        "Powered by @PumpReelsBot"
+    )
 
     # 2) Send an animation (GIF) + caption
     await update.message.reply_animation(
         animation="https://comforting-druid-bafd91.netlify.app/rendering.gif",
-        caption="Open the mini app to create your video!",
-        reply_markup=reply_markup
+        caption="caption,
+        parse_mode="Markdown"
     )
 
 
