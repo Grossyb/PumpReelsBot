@@ -160,16 +160,9 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
 # deletes temporary files and bot messages, and sends the final video.
 # ------------------
 async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prompt_text: str):
-    logger.info("PROCESSING VIDEO")
-    # Determine the message to reply from (works for both messages and callback queries)
-    if update.message:
-        reply_from = update.message
-    elif update.callback_query:
-        reply_from = update.callback_query.message
-    else:
-        reply_from = None
 
     chat_id = update.effective_chat.id
+    user_identifier = update.message.from_user.username or update.message.from_user.first_name
 
     processing_msg = await application.bot.send_animation(
         chat_id=chat_id,
@@ -227,9 +220,10 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
 
     # Send the final video or an error message.
     if video_url:
-        await application.bot.send_video(chat_id=chat_id, video=video_url, caption="Your AI-generated video is ready!")
+        caption = f"@{user_identifier} video is ready!\n\n{prompt_text}"
+        await application.bot.send_video(chat_id=chat_id, video=video_url, caption=caption)
     else:
-        await application.bot.send_message(chat_id=chat_id, text="Sorry, an error occurred processing your request.")
+        await application.bot.send_message(chat_id=chat_id, text="Sorry, an error occurred processing your video.")
 
 # ------------------
 # Telegram Handlers (Async)
@@ -529,7 +523,7 @@ generate_video_handler = MessageHandler(
     filters.PHOTO & filters.CaptionRegex(r"^/generate_video\b"),
     generate_video_command
 )
-application.add_handler(CommandHandler(generate_video_handler)
+application.add_handler(CommandHandler(generate_video_handler))
 application.add_handler(CommandHandler("credits", credits))
 application.add_handler(conv_handler)
 
