@@ -591,94 +591,94 @@ async def radom_webhook(request: Request):
 
 
 # ENDPOINTS FOR MINI APP
-# @app.post("/generateVideo")
-# async def generate_video_endpoint(
-#     prompt_text: str = Form(...),
-#     image: UploadFile = File(...),
-# ):
-#     """
-#     1) Receives an image + prompt text.
-#     2) Calls PikaClient to start video generation.
-#     3) Returns an immediate response with video_id, not the final video.
-#     """
-#
-#     # Read the uploaded file into memory
-#     try:
-#         image_bytes = await image.read()
-#     except Exception as e:
-#         logger.error("Failed to read uploaded image: %s", e)
-#         raise HTTPException(status_code=400, detail="Could not read the image file.")
-#
-#     # Optional: do any validation or modifications of prompt_text
-#     user_prompt = prompt_text.strip()
-#     if not user_prompt:
-#         raise HTTPException(status_code=400, detail="No prompt_text was provided.")
-#
-#     # Example negative prompt, resolution, etc.
-#     negative_prompt = "blurry, low quality, distorted, warped, deformed, color shifted"
-#     duration = 5
-#     resolution = "720p"
-#
-#     # Call your PikaClient generate_video method
-#     try:
-#         result = pika_client.generate_video(
-#             image_file="image.jpg",       # Arbitrary name
-#             image_bytes=io.BytesIO(image_bytes),
-#             prompt_text=user_prompt,
-#             negative_prompt=negative_prompt,
-#             duration=duration,
-#             resolution=resolution
-#         )
-#     except Exception as e:
-#         logger.error("Error calling generate_video: %s", e)
-#         raise HTTPException(status_code=500, detail="Failed to create the video.")
-#
-#     video_id = result.get("video_id")
-#     if not video_id:
-#         raise HTTPException(status_code=500, detail="No video_id returned from PikaClient.")
-#
-#     # Return an immediate JSON response with the new video_id
-#     return {
-#         "video_id": video_id,
-#         "status": "queued"  # or whatever initial status you want to indicate
-#     }
-#
-#
-# @app.get("/getVideoStatus")
-# async def get_video_status_endpoint(
-#     video_id: str = Query(..., description="The ID of the video to poll")
-# ):
-#     """
-#     1) Takes a 'video_id' as a query param.
-#     2) Checks with PikaClient for the current status, progress, or final URL.
-#     3) Returns the info as JSON (including the final video URL if finished).
-#     """
-#     try:
-#         video_data = pika_client.check_video_status(video_id=video_id)
-#     except Exception as e:
-#         logger.error("Error checking video status: %s", e)
-#         raise HTTPException(status_code=500, detail="Failed to check video status.")
-#
-#     # PikaClient might return something like:
-#     # {
-#     #   'status': 'finished',  # or 'queued' / 'started' / 'failed'
-#     #   'progress': 100,
-#     #   'url': 'https://...'
-#     # }
-#     if not video_data:
-#         raise HTTPException(status_code=404, detail="Video data not found for that video_id.")
-#
-#     status = video_data.get('status', 'unknown')
-#     progress = video_data.get('progress', 0)
-#     url = video_data.get('url', '')
-#
-#     # If you want to return the entire dictionary:
-#     return {
-#         "video_id": video_id,
-#         "status": status,
-#         "progress": progress,
-#         "url": url  # Only valid if status == 'finished'
-#     }
+@app.post("/generateVideo")
+async def generate_video_endpoint(
+    prompt_text: str = Form(...),
+    image: UploadFile = File(...),
+):
+    """
+    1) Receives an image + prompt text.
+    2) Calls PikaClient to start video generation.
+    3) Returns an immediate response with video_id, not the final video.
+    """
+
+    # Read the uploaded file into memory
+    try:
+        image_bytes = await image.read()
+    except Exception as e:
+        logger.error("Failed to read uploaded image: %s", e)
+        raise HTTPException(status_code=400, detail="Could not read the image file.")
+
+    # Optional: do any validation or modifications of prompt_text
+    user_prompt = prompt_text.strip()
+    if not user_prompt:
+        raise HTTPException(status_code=400, detail="No prompt_text was provided.")
+
+    # Example negative prompt, resolution, etc.
+    negative_prompt = "blurry, low quality, distorted, warped, deformed, color shifted"
+    duration = 5
+    resolution = "720p"
+
+    # Call your PikaClient generate_video method
+    try:
+        result = pika_client.generate_video(
+            image_file="image.jpg",       # Arbitrary name
+            image_bytes=io.BytesIO(image_bytes),
+            prompt_text=user_prompt,
+            negative_prompt=negative_prompt,
+            duration=duration,
+            resolution=resolution
+        )
+    except Exception as e:
+        logger.error("Error calling generate_video: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to create the video.")
+
+    video_id = result.get("video_id")
+    if not video_id:
+        raise HTTPException(status_code=500, detail="No video_id returned from PikaClient.")
+
+    # Return an immediate JSON response with the new video_id
+    return {
+        "video_id": video_id,
+        "status": "queued"  # or whatever initial status you want to indicate
+    }
+
+
+@app.get("/getVideoStatus")
+async def get_video_status_endpoint(
+    video_id: str = Query(..., description="The ID of the video to poll")
+):
+    """
+    1) Takes a 'video_id' as a query param.
+    2) Checks with PikaClient for the current status, progress, or final URL.
+    3) Returns the info as JSON (including the final video URL if finished).
+    """
+    try:
+        video_data = pika_client.check_video_status(video_id=video_id)
+    except Exception as e:
+        logger.error("Error checking video status: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to check video status.")
+
+    # PikaClient might return something like:
+    # {
+    #   'status': 'finished',  # or 'queued' / 'started' / 'failed'
+    #   'progress': 100,
+    #   'url': 'https://...'
+    # }
+    if not video_data:
+        raise HTTPException(status_code=404, detail="Video data not found for that video_id.")
+
+    status = video_data.get('status', 'unknown')
+    progress = video_data.get('progress', 0)
+    url = video_data.get('url', '')
+
+    # If you want to return the entire dictionary:
+    return {
+        "video_id": video_id,
+        "status": status,
+        "progress": progress,
+        "url": url  # Only valid if status == 'finished'
+    }
 
 @app.get("/")
 async def root():
