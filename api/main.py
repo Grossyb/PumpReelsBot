@@ -399,7 +399,7 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
     # 2) Send an animation (GIF) + caption
     await update.message.reply_animation(
         animation="https://comforting-druid-bafd91.netlify.app/rendering.gif",
-        caption="caption,
+        caption=caption,
         parse_mode="Markdown"
     )
 
