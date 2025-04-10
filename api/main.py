@@ -160,6 +160,7 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
 # deletes temporary files and bot messages, and sends the final video.
 # ------------------
 async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prompt_text: str):
+    logger.info("PROCESSING VIDEO")
     # Determine the message to reply from (works for both messages and callback queries)
     if update.message:
         reply_from = update.message
@@ -358,6 +359,8 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
     #    - update.message.caption might look like "/generate_video my text here"
     #    - We want to parse out "my text here"
     caption = update.message.caption or ""  # fallback empty string if somehow missing
+    logger.info("THEON GREYJOY")
+    logger.info(caption)
     pieces = caption.split(None, 1)  # split into two parts: command and the rest
     if len(pieces) < 2:
         # Means they only typed "/generate_video" with no extra text
@@ -367,6 +370,7 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
     # pieces[0] == "/generate_video"
     # pieces[1] == "my text here"
     prompt_text = pieces[1].strip()
+    logger.info(prompt_text)
     if not prompt_text:
         # no user text
         await send_open_mini_app_card(update, context)
