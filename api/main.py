@@ -523,8 +523,13 @@ conv_handler = ConversationHandler(
 )
 
 application.add_handler(CommandHandler("start", start))
+
 application.add_handler(CommandHandler("pumpreels", pumpreels))
-application.add_handler(CommandHandler("generate_video", generate_video_command))
+generate_video_handler = MessageHandler(
+    filters.PHOTO & filters.CaptionRegex(r"^/generate_video\b"),
+    generate_video_command
+)
+application.add_handler(CommandHandler(generate_video_handler)
 application.add_handler(CommandHandler("credits", credits))
 application.add_handler(conv_handler)
 
