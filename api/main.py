@@ -383,20 +383,26 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
 
 async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # "/generate_video [your prompt] and attach an image to create your AI video instantly!\n\n"
+
     caption = (
-        "Generate your AI Video with our Mini App\\.\n"
-        "📱 [Open Mini App](https://t.me/pumpreelsbot?startapp=create)\n\n"
+        "Generate your AI Video with our Mini App\\.\n\n"
         "OR ENTER\n"
         "`/generate_video [your prompt]` and attach an image to create your AI video instantly\\!\n\n"
         "Powered by @PumpReelsBot"
     )
 
-    # 2) Send an animation (GIF) + caption
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🎬 Open Mini App", web_app={"url": "https://pumpreels-mini-app.netlify.app"})]
+    ])
+
+    # Send animation with caption and web app button
     await update.message.reply_animation(
         animation="https://pumpreels-mini-app.netlify.app/rendering.gif",
         caption=caption,
-        parse_mode="MarkdownV2"
+        parse_mode="MarkdownV2",
+        reply_markup=keyboard
     )
+
 
 
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
