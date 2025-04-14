@@ -92,7 +92,7 @@ def handle_new_group_update(update_json):
         logger.info("New bot added is not pumpreelsbot. No action taken.")
 
 
-async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
+async def get_video_url(video_id: str, chat_id: int, message_id: int, user_identifier: str) -> str:
     start_time = time.monotonic()
     max_wait_seconds = 300  # 5 minutes
     while time.monotonic() - start_time < max_wait_seconds:
@@ -119,7 +119,7 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
                     await application.bot.edit_message_caption(
                         chat_id=chat_id,
                         message_id=message_id,
-                        caption=f"Rendering your video... {progress}%"
+                        caption=f"@{user_identifier} your videois rendering... {progress}%"
                     )
                 except BadRequest as e:
                     # If the error message is "Message is not modified", ignore it.
@@ -141,7 +141,7 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int) -> str:
 
             elif status in ['failed', 'canceled']:
                 logger.error("Task failed or was canceled: %s", video)
-                return None
+                return Nonea
 
             else:
                 # Handle unexpected status values with a log
@@ -166,7 +166,7 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
 
     processing_msg = await application.bot.send_animation(
         chat_id=chat_id,
-        animation="https://comforting-druid-bafd91.netlify.app/rendering.gif",
+        animation="https://pumpreels-mini-app.netlify.app/rendering.gif",
         caption=f"@{user_identifier} video is in queue..."
     )
 
@@ -192,7 +192,7 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
         )
         video_id = pika_result.get('video_id', '')
         logger.info("Video started with id: %s", video_id)
-        video_url = await get_video_url(video_id, msg_chat_id, msg_id)
+        video_url = await get_video_url(video_id, msg_chat_id, msg_id, user_identifier)
     except Exception as e:
         logger.error("Error generating video: %s", e)
 
@@ -220,7 +220,7 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
 
     # Send the final video or an error message.
     if video_url:
-        caption = f"@{user_identifier} video is ready!\n\n{prompt_text}"
+        caption = f"@{user_identifier} your video is ready!\n\n{prompt_text}"
         await application.bot.send_video(chat_id=chat_id, video=video_url, caption=caption)
     else:
         await application.bot.send_message(chat_id=chat_id, text="Sorry, an error occurred while sprocessing your video.")
@@ -383,17 +383,16 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
 async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # "/generate_video [your prompt] and attach an image to create your AI video instantly!\n\n"
     caption = (
-        "✨ Generate AI videos for your memecoin\\!\n"
         "Generate your AI Video with our Mini App\\.\n"
         "📱 [Open Mini App](https://t.me/pumpreelsbot/pumpreelsapp)\n\n"
-        "OR TYPE\n"
+        "OR ENTER\n"
         "`/generate_video [your prompt]` and attach an image to create your AI video instantly\\!\n\n"
         "Powered by @PumpReelsBot"
     )
 
     # 2) Send an animation (GIF) + caption
     await update.message.reply_animation(
-        animation="https://comforting-druid-bafd91.netlify.app/rendering.gif",
+        animation="https:///pumpreels-mini-app.netlify.app/rendering.gif",
         caption=caption,
         parse_mode="MarkdownV2"
     )
