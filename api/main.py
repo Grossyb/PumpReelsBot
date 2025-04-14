@@ -636,7 +636,7 @@ async def generate_video_endpoint(
     negative_prompt = "blurry, low quality, distorted, warped, deformed, color shifted"
     duration = 5
     resolution = "720p"
-    image_io = io.BytesIO(file_bytes)
+    image_io = io.BytesIO(image_bytes)
     image_io.name = "image.jpg"
 
     # Call your PikaClient generate_video method
