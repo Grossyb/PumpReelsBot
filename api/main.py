@@ -8,6 +8,7 @@ import uvicorn
 import base64
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, UploadFile, File, Form, Query, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from storage.firestore_client import FirestoreClient
 from storage.gcs_client import GCSClient
 from ai_services.pika_client import PikaClient
@@ -565,6 +566,18 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
+
+origins = [
+    "https://pumpreels-mini-app.netlify.app",  # your web app origin
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # or ["*"] for all
+    allow_credentials=True,
+    allow_methods=["*"],  # or limit to ["GET", "POST"] etc.
+    allow_headers=["*"],
+)
 
 @app.post("/webhook")
 async def telegram_webhook(request: Request):
