@@ -385,7 +385,7 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
     # "/generate_video [your prompt] and attach an image to create your AI video instantly!\n\n"
     caption = (
         "Generate your AI Video with our Mini App\\.\n"
-        "📱 [Open Mini App](https://t.me/pumpreelsbot/pumpreelsapp)\n\n"
+        "📱 [Open Mini App](https://t.me/pumpreelsbot?startapp=create)\n\n"
         "OR ENTER\n"
         "`/generate_video [your prompt]` and attach an image to create your AI video instantly\\!\n\n"
         "Powered by @PumpReelsBot"
@@ -630,12 +630,14 @@ async def generate_video_endpoint(
     negative_prompt = "blurry, low quality, distorted, warped, deformed, color shifted"
     duration = 5
     resolution = "720p"
+    image_io = io.BytesIO(file_bytes)
+    image_io.name = "image.jpg"
 
     # Call your PikaClient generate_video method
     try:
         result = pika_client.generate_video(
-            image_file="image.jpg",       # Arbitrary name
-            image_bytes=io.BytesIO(image_bytes),
+            image_file="image.jpg",
+            image_bytes=image_io,
             prompt_text=user_prompt,
             negative_prompt=negative_prompt,
             duration=duration,
