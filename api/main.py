@@ -392,7 +392,7 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
     )
 
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🎬 Open Mini App", web_app={"url": "https://pumpreels-mini-app.netlify.app"})]
+        [InlineKeyboardButton("🎬 Open Mini App", web_app=WebAppInfo(url="https://pumpreels-mini-app.netlify.app"))]
     ])
 
     # Send animation with caption and web app button
