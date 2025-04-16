@@ -384,11 +384,12 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
 async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_TYPE):
     caption = (
         "Generate your AI Video with our Mini App\\\n"
-        "📱 \\[Open Mini App\\]\\(https://t\\me/pumpreelsbot/pumpreelsapp\\)\n\n"
+        "📱 [Open Mini App](https://t.me/pumpreelsbot/pumpreelsapp)\n\n"
         "OR ENTER\n"
         "\\/generate\\_video \\[your prompt\\] and attach an image to create your AI video instantly\\\n\n"
         "Powered by \\@PumpReelsBot"
     )
+
 
     # keyboard = ReplyKeyboardMarkup(
     #     keyboard=[
