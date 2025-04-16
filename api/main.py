@@ -390,20 +390,26 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
         "Powered by \\@PumpReelsBot"
     )
 
-    keyboard = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="📱Open Mini App", web_app=WebAppInfo(url="https://pumpreels-mini-app.netlify.app"))]
-        ],
-        resize_keyboard=True,
-        one_time_keyboard=True
-    )
+    # keyboard = ReplyKeyboardMarkup(
+    #     keyboard=[
+    #         [KeyboardButton(text="📱Open Mini App", web_app=WebAppInfo(url="https://pumpreels-mini-app.netlify.app"))]
+    #     ],
+    #     resize_keyboard=True,
+    #     one_time_keyboard=True
+    # )
 
     await update.message.reply_animation(
         animation="https://pumpreels-mini-app.netlify.app/rendering.gif",
         caption=caption,
-        parse_mode="MarkdownV2",
-        reply_markup=keyboard
+        parse_mode="MarkdownV2"
     )
+
+    # await update.message.reply_animation(
+    #     animation="https://pumpreels-mini-app.netlify.app/rendering.gif",
+    #     caption=caption,
+    #     parse_mode="MarkdownV2",
+    #     reply_markup=keyboard
+    # )
 
 
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
