@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from storage.firestore_client import FirestoreClient
 from storage.gcs_client import GCSClient
 from ai_services.pika_client import PikaClient
-from telegram import Update, InlineKeyboardButton, WebAppInfo, InlineKeyboardMarkup, ForceReply
+from telegram import Update, KeyboardButton, InlineKeyboardButton, WebAppInfo, InlineKeyboardMarkup, ForceReply, ReplyKeyboardMarkup
 from telegram.error import BadRequest
 from telegram.ext import (
     Application,
@@ -390,11 +390,20 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
         "Powered by \\@PumpReelsBot"
     )
 
+    # Create a reply keyboard with a Web App button
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="🎬 Open Mini App", web_app=WebAppInfo(url="https://pumpreels-mini-app.netlify.app"))]
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
 
     await update.message.reply_animation(
         animation="https://pumpreels-mini-app.netlify.app/rendering.gif",
         caption=caption,
-        parse_mode="MarkdownV2"
+        parse_mode="MarkdownV2",
+        reply_markup=keyboard
     )
 
 
