@@ -394,16 +394,15 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
             [InlineKeyboardButton(text="📱Open Mini App", url="https://t.me/pumpreelsbot/pumpreelsapp")]
-        ],
-        resize_keyboard=True,
-        one_time_keyboard=True
+        ]
     )
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
     await update.message.reply_animation(
         animation="https://pumpreels-mini-app.netlify.app/rendering.gif",
         caption=caption,
         parse_mode="MarkdownV2",
-        reply_markup=keyboard
+        reply_markup=reply_markup
     )
 
     # await update.message.reply_animation(
