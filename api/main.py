@@ -390,12 +390,9 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
         "Powered by \\@PumpReelsBot"
     )
 
-
-    keyboard = ReplyKeyboardMarkup(
-        keyboard=[
-            [InlineKeyboardButton(text="📱Open Mini App", url="https://t.me/pumpreelsbot/pumpreelsapp")]
-        ]
-    )
+    keyboard = [
+        [InlineKeyboardButton(text="📱Open Mini App", url="https://t.me/pumpreelsbot/pumpreelsapp")]
+    ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     await update.message.reply_animation(
