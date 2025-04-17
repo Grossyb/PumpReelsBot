@@ -616,7 +616,7 @@ async def radom_webhook(request: Request):
 
 # ENDPOINTS FOR MINI APP
 @app.post("/generateVideo")
-async def generate_video_endpoint(
+async def generate_video(
     prompt_text: str = Form(...),
     image: UploadFile = File(...),
 ):
@@ -671,7 +671,7 @@ async def generate_video_endpoint(
 
 
 @app.get("/getVideoStatus")
-async def get_video_status_endpoint(
+async def get_video_status(
     video_id: str = Query(..., description="The ID of the video to poll")
 ):
     """
@@ -709,14 +709,16 @@ async def get_video_status_endpoint(
 
 @app.post("/sendVideo")
 async def send_video(
-    group_id: str = Form(...),
-    video_url: str = Form(...)
+    group_id: int = Form(...),
+    video_url: str = Form(...),
+    user_identifier: str = Form(...),
+    prompt_text: str = Form(...)
 ):
     try:
         await bot.send_video(
             chat_id=group_id,
             video=video_url,
-            caption="🎬 Your AI-generated video is ready!"
+            caption = f"@{user_identifier} your video is ready!\n\n{prompt_text}"
         )
         return {"status": "success"}
     except Exception as e:
