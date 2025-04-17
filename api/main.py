@@ -714,22 +714,14 @@ async def send_video(
     user_identifier: str = Form(...),
     prompt_text: str = Form(...)
 ):
-    logger.info("Incoming request:", {
-        "group_id": group_id,
-        "video_url": video_url,
-        "user_identifier": user_identifier,
-        "prompt_text": prompt_text
-    })
-
     try:
-        await bot.send_video(
+        await application.bot.send_video(
             chat_id=group_id,
             video=video_url,
-            caption=f"@{user_identifier} your video is ready!\n\n{prompt_text}"
+            caption = f"@{user_identifier} your video is ready!\n\n{prompt_text}"
         )
         return {"status": "success"}
     except Exception as e:
-        print("Error:", str(e))  # log the error
         return {"status": "error", "detail": str(e)}
 
 
