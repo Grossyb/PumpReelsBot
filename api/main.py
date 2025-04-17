@@ -382,16 +382,22 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
 
 
 async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    start_param = f"from_{chat_id}"
+
     caption = (
         "Generate your AI Video with our Mini App\\\n"
-        "📱 [Open Mini App](https://t.me/pumpreelsbot/pumpreelsapp)\n\n"
+        f"📱 [Open Mini App](https://t.me/pumpreelsbot?startapp={start_param})\n\n"
         "OR ENTER\n"
         "\\/generate\\_video \\[your prompt\\] and attach an image to create your AI video instantly\\\n\n"
         "Powered by \\@PumpReelsBot"
     )
 
     keyboard = [
-        [InlineKeyboardButton(text="📱Open Mini App", url="https://t.me/pumpreelsbot/pumpreelsapp")]
+        [InlineKeyboardButton(
+            text="📱Open Mini App",
+            url=f"https://t.me/pumpreelsbot?startapp={start_param}"
+        )]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -401,6 +407,7 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
         parse_mode="MarkdownV2",
         reply_markup=reply_markup
     )
+
 
     # await update.message.reply_animation(
     #     animation="https://pumpreels-mini-app.netlify.app/rendering.gif",
