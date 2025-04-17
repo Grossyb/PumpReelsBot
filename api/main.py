@@ -706,6 +706,23 @@ async def get_video_status_endpoint(
         "url": url  # Only valid if status == 'finished'
     }
 
+
+@app.post("/sendVideo")
+async def send_video(
+    group_id: str = Form(...),
+    video_url: str = Form(...)
+):
+    try:
+        await bot.send_video(
+            chat_id=group_id,
+            video=video_url,
+            caption="🎬 Your AI-generated video is ready!"
+        )
+        return {"status": "success"}
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
+
+
 @app.get("/")
 async def root():
     return {"message": "Hello, FastAPI Telegram bot!"}
