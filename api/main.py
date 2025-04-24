@@ -227,7 +227,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     return ConversationHandler.END
 
-    
+
 async def credits(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_chat.id
     group_data = firestore_client.get_group(str(chat_id))
@@ -277,6 +277,7 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
     of an attached photo. If missing image/text, send a fallback with a "rich card" that
     links to the mini app.
     """
+    chat_id = update.effective_chat.id
 
     group_data = firestore_client.get_group(str(chat_id))
 
@@ -295,8 +296,6 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
             reply_markup=reply_markup
         )
         return ConversationHandler.END
-
-    chat_id = update.effective_chat.id
 
     # 1) Check if user posted a photo.
     #    If the user typed `/generate_video` + text in a text-only message, there's no photo -> fallback.
