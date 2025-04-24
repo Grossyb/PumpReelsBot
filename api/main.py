@@ -340,6 +340,25 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
     of an attached photo. If missing image/text, send a fallback with a "rich card" that
     links to the mini app.
     """
+
+    group_data = firestore_client.get_group(str(chat_id))
+
+    if group_data is None:
+        await update.message.reply_text("Your group is not registered. Please contact PumpReels for help.")
+        return ConversationHandler.END
+
+    credits = group_data.get('credits', 0)
+
+    if credits == 0 or credits < VIDEO_CREDITS:
+        keyboard = [[InlineKeyboardButton("Buy Credits", callback_data="buy_credits")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await update.message.reply_text(
+            f"Your group has {credits} credits left. Please purchase more credits to continue.",
+            reply_markup=reply_markup
+        )
+        return ConversationHandler.END
+
     chat_id = update.effective_chat.id
 
     # 1) Check if user posted a photo.
