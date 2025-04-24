@@ -402,28 +402,18 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text("Video cancelled.")
     return ConversationHandler.END
 
-# ------------------
-# Conversation Handler
-# ------------------
-# conv_handler = ConversationHandler(
-#     entry_points=[CallbackQueryHandler(button_callback, pattern="^generate_video$")],
-#     fallbacks=[CommandHandler("cancel", cancel)],
-#     per_chat=True,
-#     per_user=True,
-# )
-
 application.add_handler(CommandHandler("start", start))
-
 application.add_handler(CommandHandler("pumpreels", pumpreels))
+application.add_handler(CommandHandler("generate_video", generate_video_command))
 generate_video_handler = MessageHandler(
     filters.PHOTO & filters.CaptionRegex(r"^/generate_video\b"),
     generate_video_command
 )
-
 application.add_handler(generate_video_handler)
-application.add_handler(CommandHandler("generate_video", generate_video_command))
 application.add_handler(CommandHandler("credits", credits))
-# application.add_handler(conv_handler)
+application.add_handler(
+    CallbackQueryHandler(credits, pattern=r"^credits$")
+)
 application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_web_app_data))
 
 
