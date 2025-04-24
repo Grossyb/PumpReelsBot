@@ -288,7 +288,7 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
     credits = group_data.get('credits', 0)
 
     if credits == 0 or credits < VIDEO_CREDITS:
-        keyboard = [[InlineKeyboardButton("Buy Credits", callback_data="buy_credits")]]
+        keyboard = [[InlineKeyboardButton("Buy Credits", callback_data="credits")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         await update.message.reply_text(
