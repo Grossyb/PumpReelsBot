@@ -120,7 +120,7 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int, user_ident
                     await application.bot.edit_message_caption(
                         chat_id=chat_id,
                         message_id=message_id,
-                        caption=f"@{user_identifier} your videois rendering... {progress}%"
+                        caption=f"@{user_identifier} your video is rendering... {progress}%"
                     )
                 except BadRequest as e:
                     # If the error message is "Message is not modified", ignore it.
