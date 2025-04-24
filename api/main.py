@@ -30,17 +30,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Conversation states: IMAGE -> PROMPT_TEMPLATES -> PROMPT
-# IMAGE, PROMPT_TEMPLATES, PROMPT = range(3) FIX THIS
-IMAGE, PROMPT = range(2)
-
-prompt_templates = {
-    "TO THE MOON": "It is in the cockpit of a spacecraft, pressing buttons and gazing out at the Moon through the window",
-    "WEN LAMBO": "it is driving a red lamborghini down a road in South Beach, sunny, luxurious background",
-    "WAGMI": "It is dressed in a black suit with a tie, sitting in private jet seat next to window. Champagne on table, luxurious interior",
-}
-
-
 VIDEO_CREDITS = 50
 
 # RADOM_TEST_KEY = os.environ.get('RADOM_TEST_KEY')
@@ -162,6 +151,8 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int, user_ident
 # ------------------
 async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prompt_text: str):
 
+    # MARK: DECREMENT CREDITS
+
     chat_id = update.effective_chat.id
     user_identifier = update.message.from_user.username or update.message.from_user.first_name
 
@@ -196,22 +187,6 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
         video_url = await get_video_url(video_id, msg_chat_id, msg_id, user_identifier)
     except Exception as e:
         logger.error("Error generating video: %s", e)
-
-    # Delete previous bot messages.
-    message_keys = [
-        "inline_button_message_id",
-        "image_prompt_message_id",
-        "prompt_templates_message_id",
-        "prompt_prompt_message_id"
-    ]
-    for key in message_keys:
-        message_id = context.user_data.get(key)
-        if message_id:
-            try:
-                await application.bot.delete_message(chat_id=chat_id, message_id=message_id)
-                logger.info("Deleted bot message %s: %s", key, message_id)
-            except Exception as e:
-                logger.error("Failed to delete bot message %s (%s): %s", key, message_id, e)
 
     try:
         await application.bot.delete_message(chat_id=chat_id, message_id=processing_msg.message_id)
@@ -252,8 +227,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     return ConversationHandler.END
 
-
-
+    
 async def credits(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_chat.id
     group_data = firestore_client.get_group(str(chat_id))
@@ -294,44 +268,7 @@ Pre-purchase credits at a discounted rate and get more value!
 
 
 async def pumpreels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    chat_id = update.effective_chat.id
-
-    try:
-        group_data = firestore_client.get_group(str(chat_id))
-
-        if group_data is None:
-            await update.message.reply_text("Your group is not registered. Please contact PumpReels for help.")
-            return ConversationHandler.END
-
-        credits = group_data.get('credits', 0)
-
-        if credits == 0 or credits < VIDEO_CREDITS:
-            keyboard = [[InlineKeyboardButton("Buy Credits", callback_data="buy_credits")]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-
-            await update.message.reply_text(
-                f"Your group has {credits} credits left. Please purchase more credits to continue.",
-                reply_markup=reply_markup
-            )
-            return ConversationHandler.END
-
-        keyboard = [[InlineKeyboardButton("Generate AI Video", callback_data="generate_video")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-
-        if update.message:
-            sent = await update.message.reply_text(
-                f"Welcome to PumpReels! Your group has {credits} credits remaining.",
-                reply_markup=reply_markup
-            )
-            context.user_data["inline_button_message_id"] = sent.message_id
-
-        return ConversationHandler.END
-
-    except Exception as e:
-        # Handle any errors
-        print(f"Error in start command: {str(e)}")
-        await update.message.reply_text("An error occurred. Please try again later.")
-        return ConversationHandler.END
+    await send_open_mini_app_card(update, context)
 
 
 async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -373,8 +310,6 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
     #    - update.message.caption might look like "/generate_video my text here"
     #    - We want to parse out "my text here"
     caption = update.message.caption or ""  # fallback empty string if somehow missing
-    logger.info("THEON GREYJOY")
-    logger.info(caption)
     pieces = caption.split(None, 1)  # split into two parts: command and the rest
     if len(pieces) < 2:
         # Means they only typed "/generate_video" with no extra text
@@ -391,7 +326,6 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
         return
 
     # 3) We have a photo and the user text -> proceed to process_video
-    #    Same logic as your existing “receive_image” or “process_video” flow
     photo = update.message.photo[-1]  # the largest resolution photo
     file_id = photo.file_id
     context.user_data["file_id"] = file_id
@@ -430,103 +364,16 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
     # )
 
 
-async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-
-    try:
-        await query.answer()
-    except BadRequest as e:
-        if "Query is too old" in str(e):
-            await context.bot.send_message(
-                chat_id=query.message.chat_id,
-                text="This thread has expired. Please try again."
-            )
-            return
-        else:
-            raise
-
-    user_identifier = query.from_user.username or query.from_user.first_name
-    msg = await query.message.reply_text(
-        f"@{user_identifier}, please reply to this message with an image from your camera roll.",
-        reply_markup=ForceReply(selective=True, input_field_placeholder="Attach your image here")
-    )
-    context.user_data["image_prompt_message_id"] = msg.message_id
-    return IMAGE
-
-
-async def receive_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    chat_id = update.effective_chat.id
-    if update.message and update.message.photo:
-        user_identifier = update.message.from_user.username or update.message.from_user.first_name
-
-        photo = update.message.photo[-1]
-        file_id = photo.file_id
-        context.user_data["file_id"] = file_id
-        context.user_data["image_message_id"] = update.message.message_id
-
-        # Delete the ForceReply prompt for the image.
-        if "image_prompt_message_id" in context.user_data:
-            try:
-                await application.bot.delete_message(
-                    chat_id=chat_id,
-                    message_id=context.user_data["image_prompt_message_id"]
-                )
-                logger.info("Deleted image prompt message: %s", context.user_data["image_prompt_message_id"])
-            except Exception as e:
-                logger.error("Failed to delete image prompt message: %s", e)
-
-        msg = await update.message.reply_text(
-            f"@{user_identifier}, please type your custom prompt:",
-            reply_markup=ForceReply(selective=True, input_field_placeholder="Enter your prompt here")
-        )
-        context.user_data["prompt_prompt_message_id"] = msg.message_id
-        return PROMPT
-
-        # # Send inline keyboard with prompt templates (2x2 grid)
-        # keyboard = [
-        #     [InlineKeyboardButton("TO THE MOON", callback_data="TO THE MOON"),
-        #      InlineKeyboardButton("WEN LAMBO", callback_data="WEN LAMBO")],
-        #     [InlineKeyboardButton("WAGMI", callback_data="WAGMI"),
-        #      InlineKeyboardButton("Custom", callback_data="CUSTOM")]
-        # ]
-        # reply_markup = InlineKeyboardMarkup(keyboard)
-        # template_msg = await update.message.reply_text(
-        #     "Choose a prompt template or select Custom for your own prompt:",
-        #     reply_markup=reply_markup
-        # )
-        # context.user_data["prompt_templates_message_id"] = template_msg.message_id
-        # return PROMPT
-    else:
-        await update.message.reply_text("That doesn't seem like an image. Please send a valid image.")
-        return IMAGE
-
-async def prompt_templates_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    user_identifier = query.from_user.username or query.from_user.first_name
-    selected = query.data  # Either "TO THE MOON", "WEN LAMBO", "WAGMI", or "CUSTOM"
-    if selected == "CUSTOM":
-        # Ask for a custom prompt via ForceReply.
-        msg = await query.message.reply_text(
-            f"@{user_identifier}, please type your custom prompt:",
-            reply_markup=ForceReply(selective=True, input_field_placeholder="Enter your prompt here")
-        )
-        context.user_data["prompt_prompt_message_id"] = msg.message_id
-        return PROMPT
-    else:
-        # MARK: DO WE NEED THIS?
-
-        await process_video(update, context, prompt_text=prompt_templates[selected])
-        return ConversationHandler.END
-
-async def receive_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """
-    Handles text prompt reception when 'Custom' is selected,
-    then calls process_video to generate the video.
-    """
-    prompt_text = update.message.text
-    await process_video(update, context, prompt_text=prompt_text)
-    return ConversationHandler.END
+# async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+#     query = update.callback_query
+#
+#     user_identifier = query.from_user.username or query.from_user.first_name
+#     msg = await query.message.reply_text(
+#         f"@{user_identifier}, please reply to this message with an image from your camera roll.",
+#         reply_markup=ForceReply(selective=True, input_field_placeholder="Attach your image here")
+#     )
+#     context.user_data["image_prompt_message_id"] = msg.message_id
+#     return IMAGE
 
 
 async def handle_web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -559,17 +406,12 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 # ------------------
 # Conversation Handler
 # ------------------
-conv_handler = ConversationHandler(
-    entry_points=[CallbackQueryHandler(button_callback, pattern="^generate_video$")],
-    states={
-        IMAGE: [MessageHandler(filters.PHOTO, receive_image)],
-        # PROMPT_TEMPLATES: [CallbackQueryHandler(prompt_templates_callback, pattern="^(TO THE MOON|WEN LAMBO|WAGMI|CUSTOM)$")], FIX THIS
-        PROMPT: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_prompt)],
-    },
-    fallbacks=[CommandHandler("cancel", cancel)],
-    per_chat=True,
-    per_user=True,
-)
+# conv_handler = ConversationHandler(
+#     entry_points=[CallbackQueryHandler(button_callback, pattern="^generate_video$")],
+#     fallbacks=[CommandHandler("cancel", cancel)],
+#     per_chat=True,
+#     per_user=True,
+# )
 
 application.add_handler(CommandHandler("start", start))
 
@@ -582,7 +424,7 @@ generate_video_handler = MessageHandler(
 application.add_handler(generate_video_handler)
 application.add_handler(CommandHandler("generate_video", generate_video_command))
 application.add_handler(CommandHandler("credits", credits))
-application.add_handler(conv_handler)
+# application.add_handler(conv_handler)
 application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_web_app_data))
 
 
