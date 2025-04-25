@@ -444,7 +444,7 @@ async def pay_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # (Optional) tidy up the old message
     await cq.edit_message_reply_markup(reply_markup=None)
 
-def create_checkout(product_id: str, chat_id: int) -> str:
+def create_checkout_session(product_id: str, chat_id: int) -> str:
     """
     Returns a checkoutSessionUrl with telegram_group_id metadata.
     """
