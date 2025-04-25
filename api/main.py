@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 VIDEO_CREDITS = 50
 
 RADOM_TEST_KEY = os.environ.get('RADOM_TEST_KEY')
-RADOM_TEST_WEBHOOK_KEY = os.environ.get('RADOM_WEBHOOK_KEY')
+RADOM_TEST_WEBHOOK_KEY = os.environ.get('RADOM_TEST_WEBHOOK_KEY')
 SUCCESS_URL  = "https://t.me/YourBot?start=paid"
 CANCEL_URL   = "https://t.me/YourBot?start=cancelled"
 
@@ -465,6 +465,7 @@ def create_checkout_session(product_id: str, chat_id: int) -> str:
         "https://api.radom.com/checkout_session",
         json=payload, headers=headers, timeout=10
     )
+    logger.info(RADOM_TEST_KEY)
     logger.info("Radom status %s", r.status_code)
     logger.info("Radom body   %s", r.text)
     r.raise_for_status()
