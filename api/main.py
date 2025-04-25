@@ -39,10 +39,10 @@ SUCCESS_URL  = "https://t.me/YourBot?start=paid"
 CANCEL_URL   = "https://t.me/YourBot?start=cancelled"
 
 CREDIT_PLANS = {
-    "2500":  "342b688b-c051-4820-ba9f-26c648cddde3",
-    "6250":  "fd243359-b3a6-4c7e-a082-6cbab298328b",
-    "12500": "22084efe-2acc-46dc-aa83-255e40ec550c",
-    "25000": "176362cb-e739-47d3-9232-c025b5d859fc",
+    "2500":  "edb1f9eb-673b-4105-90ad-6c6bff8743bc",
+    "6250":  "8ef0e2c0-8efa-47f2-97cf-97dae84b4420",
+    "12500": "7dcbaadf-a6e1-4caa-af54-0474646c1bd8",
+    "25000": "65b3ad96-efa2-45d3-a970-82db6bae5993",
 }
 CURRENCY = "USD"
 
