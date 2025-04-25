@@ -439,7 +439,7 @@ async def pay_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     keyboard = [
-        [InlineKeyboardButton("💳 Pay with Bitcoin", url=checkout_url)],
+        [InlineKeyboardButton("💳 Pay with Crypto", url=checkout_url)],
         # add more rows for USDC, Lightning, etc.
     ]
 
@@ -456,7 +456,6 @@ def create_checkout_session(product_id: str, chat_id: int) -> str:
     payload = {
         "lineItems":  [{"productId": product_id}],
         "currency":   "USD",
-        "gateway":    {"managed": {"methods": [{"network": "Bitcoin"}]}},
         "successUrl": "https://google.com",
         "cancelUrl": "https://google.com",
         "metadata": [
