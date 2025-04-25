@@ -39,6 +39,31 @@ class FirestoreClient:
         return None
 
 
+    def add_credits(self, group_id, amount):
+        """
+        Atomically add `amount` credits to the given `group_id`.
+        • If the group document doesn’t exist, it will be created with the initial balance.
+        """
+        doc_ref = self.group_collection.document(group_id)
+
+        def _transaction_add(transaction, ref):
+            snapshot = ref.get(transaction=transaction)
+            if not snapshot.exists:
+                # Group not yet in DB → create with the starting credits
+                transaction.set(ref, {
+                    "credits": amount,
+                    "created_at": Timestamp.now(),   # optional: if you want metadata
+                })
+                return
+
+        current_credits = snapshot.get("credits", default=0)
+        new_credits = current_credits + amount
+        transaction.update(ref, {"credits": new_credits})
+
+        # Run the anonymous transactional function
+        self.db.run_transaction(lambda t: _transaction_add(t, doc_ref))
+
+
     def decrement_credits(self, group_id, amount):
         doc_ref = self.group_collection.document(group_id)
 

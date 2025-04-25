@@ -229,6 +229,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def credits(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if update.callback_query:
+        await update.callback_query.answer()
+    message = update.message or update.callback_query.message
+
     chat_id = update.effective_chat.id
     group_data = firestore_client.get_group(str(chat_id))
 
@@ -258,7 +262,7 @@ Pre-purchase credits at a discounted rate and get more value!
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await update.message.reply_text(
+    await message.reply_text(
         credit_info.strip(),
         reply_markup=reply_markup,
         parse_mode="Markdown"
