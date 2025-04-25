@@ -430,6 +430,7 @@ async def pay_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Build the Radom checkout
     try:
+        logger.info("YOLO")
         checkout_url = create_checkout_session(
             CREDIT_PLANS[credits],
             chat_id
@@ -445,6 +446,7 @@ async def pay_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await cq.edit_message_reply_markup(reply_markup=None)
 
 def create_checkout_session(product_id: str, chat_id: int) -> str:
+    logger.info("CREATING CHECKOUT SESSION")
     """
     Returns a checkoutSessionUrl with telegram_group_id metadata.
     """
@@ -460,10 +462,12 @@ def create_checkout_session(product_id: str, chat_id: int) -> str:
         "Content-Type": "application/json",
         "Authorization": f"Bearer {RADOM_TEST_KEY}",
     }
+    logger.info("YOLO2")
     r = requests.post(
         "https://api.radom.com/checkout_session",
         json=payload, headers=headers, timeout=10
     )
+    logger.info("YOLO3")
     r.raise_for_status()
     return r.json()["checkoutSessionUrl"]
 
