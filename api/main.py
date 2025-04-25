@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 VIDEO_CREDITS = 50
 
 RADOM_TEST_KEY = os.environ.get('RADOM_TEST_KEY')
-RADOM_WEBHOOK_KEY = os.environ.get('RADOM_WEBHOOK_KEY')
+RADOM_TEST_WEBHOOK_KEY = os.environ.get('RADOM_WEBHOOK_KEY')
 SUCCESS_URL  = "https://t.me/YourBot?start=paid"
 CANCEL_URL   = "https://t.me/YourBot?start=cancelled"
 
