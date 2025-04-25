@@ -6,6 +6,7 @@ import aiofiles
 import logging
 import uvicorn
 import base64
+import requests
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, UploadFile, File, Form, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,8 +33,23 @@ logger = logging.getLogger(__name__)
 
 VIDEO_CREDITS = 50
 
-# RADOM_TEST_KEY = os.environ.get('RADOM_TEST_KEY')
-# RADOM_WEBHOOK_KEY = os.environ.get('RADOM_WEBHOOK_KEY')
+RADOM_TEST_KEY = os.environ.get('RADOM_TEST_KEY')
+RADOM_WEBHOOK_KEY = os.environ.get('RADOM_WEBHOOK_KEY')
+SUCCESS_URL  = "https://t.me/YourBot?start=paid"
+CANCEL_URL   = "https://t.me/YourBot?start=cancelled"
+
+CREDIT_PLANS = {
+    "2500":  "342b688b-c051-4820-ba9f-26c648cddde3",
+    "6250":  "fd243359-b3a6-4c7e-a082-6cbab298328b",
+    "12500": "22084efe-2acc-46dc-aa83-255e40ec550c",
+    "25000": "176362cb-e739-47d3-9232-c025b5d859fc",
+}
+CURRENCY = "USD"
+
+# "https://pay.radom.com/pay/342b688b-c051-4820-ba9f-26c648cddde3"
+# "https://pay.radom.com/pay/fd243359-b3a6-4c7e-a082-6cbab298328b"
+# "https://pay.radom.com/pay/22084efe-2acc-46dc-aa83-255e40ec550c"
+# "https://pay.radom.com/pay/176362cb-e739-47d3-9232-c025b5d859fc"
 
 firestore_client = FirestoreClient()
 
@@ -255,10 +271,10 @@ Pre-purchase credits at a discounted rate and get more value!
 """
 
     keyboard = [
-        [InlineKeyboardButton("2,500 Credits", url="https://pay.radom.com/pay/342b688b-c051-4820-ba9f-26c648cddde3"),
-         InlineKeyboardButton("6,250 Credits", url="https://pay.radom.com/pay/fd243359-b3a6-4c7e-a082-6cbab298328b")],
-        [InlineKeyboardButton("12,500 Credits", url="https://pay.radom.com/pay/22084efe-2acc-46dc-aa83-255e40ec550c"),
-         InlineKeyboardButton("25,000 Credits", url="https://pay.radom.com/pay/176362cb-e739-47d3-9232-c025b5d859fc")]
+        [InlineKeyboardButton("2,500 Credits", callback_data="2500"),
+         InlineKeyboardButton("6,250 Credits", callback_data="6250")],
+        [InlineKeyboardButton("12,500 Credits", callback_data="12500"),
+         InlineKeyboardButton("25,000 Credits", callback_data="25000")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -406,6 +422,51 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text("Video cancelled.")
     return ConversationHandler.END
 
+
+async def pay_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    cq = update.callback_query
+    credits = cq.data
+    chat_id = cq.message.chat.id
+
+    # Build the Radom checkout
+    try:
+        checkout_url = create_checkout_session(
+            CREDIT_PLANS[credits],
+            chat_id
+        )
+    except Exception:
+        await cq.answer("❌ Couldn’t start checkout, try again.", show_alert=True)
+        return
+
+    # Tell Telegram to open the link immediately
+    await cq.answer(url=checkout_url)        #  ← launches browser in every client
+
+    # (Optional) tidy up the old message
+    await cq.edit_message_reply_markup(reply_markup=None)
+
+def create_checkout(product_id: str, chat_id: int) -> str:
+    """
+    Returns a checkoutSessionUrl with telegram_group_id metadata.
+    """
+    payload = {
+        "lineItems":  [{"productId": product_id}],
+        "currency":   "USD",
+        "gateway":    {"managed": {"methods": [{"network": "Bitcoin"}]}},
+        "successUrl": SUCCESS_URL,
+        "cancelUrl":  CANCEL_URL,
+        "metadata":   [{"key": "telegram_group_id", "value": str(chat_id)}],
+    }
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {RADOM_TEST_KEY}",
+    }
+    r = requests.post(
+        "https://api.radom.com/checkout_session",
+        json=payload, headers=headers, timeout=10
+    )
+    r.raise_for_status()
+    return r.json()["checkoutSessionUrl"]
+
 application.add_handler(CommandHandler("start", start))
 application.add_handler(CommandHandler("pumpreels", pumpreels))
 application.add_handler(CommandHandler("generate_video", generate_video_command))
@@ -418,6 +479,10 @@ application.add_handler(CommandHandler("credits", credits))
 application.add_handler(
     CallbackQueryHandler(credits, pattern=r"^credits$")
 )
+application.add_handler(CallbackQueryHandler(
+        pay_callback,
+        pattern=r"^(2500|6250|12500|25000)$"   # only our four buttons
+))
 application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_web_app_data))
 
 
