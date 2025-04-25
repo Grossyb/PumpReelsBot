@@ -438,11 +438,15 @@ async def pay_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await cq.answer("❌ Couldn’t start checkout, try again.", show_alert=True)
         return
 
-    logger.info(checkout_url)
-    await cq.answer(url=checkout_url)
+    keyboard = [
+        [InlineKeyboardButton("💳 Pay with Bitcoin", url=checkout_url)],
+        # add more rows for USDC, Lightning, etc.
+    ]
 
-    # (Optional) tidy up the old message
-    await cq.edit_message_reply_markup(reply_markup=None)
+    await cq.message.reply_text(
+        "Tap a payment option below to buy credits:",
+        reply_markup=InlineKeyboardMarkup(keyboard),
+    )
 
 
 def create_checkout_session(product_id: str, chat_id: int) -> str:
