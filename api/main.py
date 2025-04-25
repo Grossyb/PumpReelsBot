@@ -462,10 +462,9 @@ def create_checkout_session(product_id: str, chat_id: int) -> str:
         "Authorization": f"Bearer {RADOM_TEST_KEY}",
     }
     r = requests.post(
-        "https://api.radom.com/checkout_session",
+        "https://api.dev.radom.com/checkout_session",
         json=payload, headers=headers, timeout=10
     )
-    logger.info(RADOM_TEST_KEY)
     logger.info("Radom status %s", r.status_code)
     logger.info("Radom body   %s", r.text)
     r.raise_for_status()
