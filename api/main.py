@@ -458,7 +458,7 @@ def create_checkout_session(product_id: str, chat_id: int) -> str:
         "metadata": [
             {
                 "key": "telegram_group_id",
-                "value": chat_id
+                "value": str(chat_id)
             }
         ],
         "expiresAt": 9999999999,
