@@ -438,8 +438,8 @@ async def pay_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await cq.answer("❌ Couldn’t start checkout, try again.", show_alert=True)
         return
 
-    # Tell Telegram to open the link immediately
-    await cq.answer(url=checkout_url)        #  ← launches browser in every client
+    logger.info(checkout_url)
+    await cq.answer(url=checkout_url)
 
     # (Optional) tidy up the old message
     await cq.edit_message_reply_markup(reply_markup=None)
