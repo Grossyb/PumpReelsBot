@@ -453,16 +453,25 @@ def create_checkout_session(product_id: str, chat_id: int) -> str:
         "lineItems":  [{"productId": product_id}],
         "currency":   "USD",
         "gateway":    {"managed": {"methods": [{"network": "Bitcoin"}]}},
-        "successUrl": SUCCESS_URL,
-        "cancelUrl":  CANCEL_URL,
-        "metadata":   [{"key": "telegram_group_id", "value": str(chat_id)}],
+        "successUrl": "https://google.com",
+        "cancelUrl": "https://google.com",
+        "metadata": [
+            {
+                "key": "telegram_group_id",
+                "value": chat_id
+            }
+        ],
+        "expiresAt": 9999999999,
     }
+    logger.info(payload)
+    logger.info("PAYLOAD")
+
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {RADOM_TEST_KEY}",
     }
     r = requests.post(
-        "https://api.dev.radom.com/checkout_session",
+        "https://api.radom.com/checkout_session",
         json=payload, headers=headers, timeout=10
     )
     logger.info("Radom status %s", r.status_code)
