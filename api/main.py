@@ -468,7 +468,7 @@ def create_checkout_session(product_id: str, chat_id: int) -> str:
 
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {RADOM_TEST_KEY}",
+        "Authorization": f"{RADOM_TEST_KEY}",
     }
     r = requests.post(
         "https://api.radom.com/checkout_session",
