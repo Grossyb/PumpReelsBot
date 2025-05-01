@@ -100,7 +100,7 @@ async def dm_admin_to_buy_credits(admin_user_id: int, group_title: str, group_ch
             text=(
                 f"👋 Thanks for adding me to *{group_title}*!\n\n"
                 f"Before I can start working in the group, you’ll need to activate me by purchasing credits 💰.\n\n"
-                f"👇 Tap below to top up and unlock features for your group:"
+                f"👇 Tap below to top up and unleash unrelenting hype in your group:"
             ),
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup([
@@ -360,7 +360,8 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
     of an attached photo. If missing image/text, send a fallback with a "rich card" that
     links to the mini app.
     """
-    chat_id = update.effective_chat.id
+    chat = update.effective_chat
+    chat_id = chat.id
 
     if chat.type not in [ChatType.GROUP, ChatType.SUPERGROUP]:
         await update.message.reply_text("Use this command in a group chat!")
