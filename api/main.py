@@ -296,6 +296,25 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
 # ------------------
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    args = context.args
+
+    if args:
+        payload = args[0]
+
+        if payload == "payment_success":
+            await update.message.reply_text(
+                "✅ Payment successful! Your group can start generating videos",
+                parse_mode="MarkdownV2"
+            )
+            return ConversationHandler.END
+
+        elif payload == "payment_cancel":
+            await update.message.reply_text(
+                "❌ Payment was canceled. You can try again with /credits.",
+                parse_mode="MarkdownV2"
+            )
+            return ConversationHandler.END
+
     start_info = """🚀 *Experience the future of Telegram community engagement with PumpReelsBot\!*
 
 🔥 Transform your *memecoin* into viral AI\-powered videos that captivate your audience and boost engagement\.
@@ -637,8 +656,8 @@ def create_checkout_session(product_id: str, chat_id: int) -> str:
                     ]
                 }
             },
-        "successUrl": "https://google.com",
-        "cancelUrl": "https://google.com",
+        "successUrl": "https://t.me/<bot_username>?start=payment_success",
+        "cancelUrl": "https://t.me/<bot_username>?start=payment_cancelled",
         "metadata": [
             {
                 "key": "telegram_group_id",
