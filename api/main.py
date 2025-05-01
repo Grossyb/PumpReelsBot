@@ -45,7 +45,8 @@ CREDIT_PLANS = {
     "1000": "688ca38e-ad12-4198-81bc-062bbc7fadf5",
     "2500": "92d3a12c-16fd-45fa-9bec-2afb4fb60cd5",
     "5000": "b9046661-1442-4d87-af62-1b598c957f12",
-    "10000": "a5ddd99e-d728-472c-ad51-53562653d1b8",
+    "10000": "a5ddd99e-d728-472c-ad51-53562653d1b8"
+}
 
 CURRENCY = "USD"
 SELECT_GROUP_FOR_CREDITS = range(1)
