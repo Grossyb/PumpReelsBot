@@ -103,9 +103,9 @@ async def dm_admin_to_buy_credits(admin_user_id: int, group_title: str, group_ch
                 f"👇 Tap below to top up and unleash unrelenting hype in your group:"
             ),
             parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("💳 Buy Credits", url=f"https://yourdomain.com/buy-credits?chat_id={group_chat_id}")]
-            ])
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton("💳 Buy Credits", callback_data="credits")]]
+            )
         )
     except Exception as e:
         logger.error(f"Failed to DM admin {admin_user_id}: {e}")
