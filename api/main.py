@@ -46,6 +46,7 @@ CREDIT_PLANS = {
     "25000": "65b3ad96-efa2-45d3-a970-82db6bae5993",
 }
 CURRENCY = "USD"
+SELECT_GROUP_FOR_CREDITS = range(1)
 
 # "https://pay.radom.com/pay/342b688b-c051-4820-ba9f-26c648cddde3"
 # "https://pay.radom.com/pay/fd243359-b3a6-4c7e-a082-6cbab298328b"
@@ -634,13 +635,17 @@ def create_checkout_session(product_id: str, chat_id: int) -> str:
     return r.json()["checkoutSessionUrl"]
 
 
-ConversationHandler(
+credits_conversation_handler = ConversationHandler(
     entry_points=[CommandHandler("credits", credits)],
     states={
-        SELECT_GROUP_FOR_CREDITS: [CallbackQueryHandler(handle_group_selection, pattern="^select_chat_")]
+        SELECT_GROUP_FOR_CREDITS: [
+            CallbackQueryHandler(handle_group_selection, pattern=r"^select_chat_-?\d+")
+        ]
     },
     fallbacks=[],
 )
+application.add_handler(credits_conversation_handler)
+
 
 application.add_handler(CommandHandler("start", start))
 application.add_handler(CommandHandler("pumpreels", pumpreels))
@@ -650,10 +655,10 @@ generate_video_handler = MessageHandler(
     generate_video_command
 )
 application.add_handler(generate_video_handler)
-application.add_handler(CommandHandler("credits", credits))
-application.add_handler(
-    CallbackQueryHandler(credits, pattern=r"^credits$")
-)
+# application.add_handler(CommandHandler("credits", credits))
+# application.add_handler(
+#     CallbackQueryHandler(credits, pattern=r"^credits$")
+# )
 application.add_handler(CallbackQueryHandler(
         pay_callback,
         pattern=r"^(2500|6250|12500|25000)$"   # only our four buttons
