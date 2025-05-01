@@ -325,22 +325,24 @@ async def show_credits_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, 
     credit_info = f"""🚀 *PumpReels Video Credit System – {group_title}*
 
 🎥 *Current Credits:* `{credits}` credits
-💰 *1 Video (5 sec) = 25 credits*
+💰 *1 Video (5 sec) = 100 credits*
 
 📦 *Top Up Options:*
-➤ 2,500 credits → `$140.00`
-➤ 6,250 credits → `$325.00`
-➤ 12,500 credits → `$550.00`
-➤ 25,000 credits → `$1,000.00`
+➤ 100 credits → `$9.50`
+➤ 500 credits → `$45.00`
+➤ 1,00 credits → `$88.00`
+➤ 2,500 credits → `$212.50`
+➤ 5,000 credits → `$420.00`
+➤ 10,000 credits → `$800.00`
 """
 
     keyboard = [
         [InlineKeyboardButton("100 Credits", callback_data="100"),
          InlineKeyboardButton("500 Credits", callback_data="500")],
-        [InlineKeyboardButton("1,00 Credits", callback_data="1000"),
-         InlineKeyboardButton("2,500 Credits", callback_data="2500")]
-        [InlineKeyboardButton("5,00 Credits", callback_data="5000"),
-         InlineKeyboardButton("10,000 Credits", callback_data="10000")],
+        [InlineKeyboardButton("1,000 Credits", callback_data="1000"),
+         InlineKeyboardButton("2,500 Credits", callback_data="2500")],
+        [InlineKeyboardButton("5,000 Credits", callback_data="5000"),
+         InlineKeyboardButton("10,000 Credits", callback_data="10000")]
     ]
 
     await message.reply_text(
@@ -716,6 +718,7 @@ app.add_middleware(
 @app.post("/webhook")
 async def telegram_webhook(request: Request):
     update_json = await request.json()
+    # MARK: GET RID OF THIS EVENTUALLY
     logger.info(update_json)
     logger.info('\n==========\n')
     await handle_new_group_update(update_json)
