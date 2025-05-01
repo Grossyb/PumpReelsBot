@@ -64,6 +64,51 @@ if not TELEGRAM_TOKEN:
 # Create the Telegram Application (PTB v20+)
 application = Application.builder().token(TELEGRAM_TOKEN).build()
 
+
+async def get_chat_administrators(chat_id: int) -> list:
+    """
+    Fetches the list of chat administrators for the given chat.
+
+    Parameters:
+      chat_id (int): Unique identifier for the target chat or username.
+
+    Returns:
+      List of User objects (admins).
+    """
+    try:
+        admins = await application.bot.get_chat_administrators(chat_id)
+        return admins
+    except Exception as e:
+        logger.error(f"Failed to get chat administrators for chat {chat_id}: {e}")
+        return []
+
+
+async def dm_admin_to_buy_credits(admin_user_id: int, group_title: str, group_chat_id: int):
+    """
+    Sends a private message to the group admin to prompt credit purchase.
+
+    Parameters:
+      admin_user_id (int): Telegram user ID of the admin.
+      group_title (str): Name of the group.
+      group_chat_id (int): Telegram chat ID of the group.
+    """
+    try:
+        await application.bot.send_message(
+            chat_id=admin_user_id,
+            text=(
+                f"👋 Thanks for adding me to *{group_title}*!\n\n"
+                f"Before I can start working in the group, you’ll need to activate me by purchasing credits 💰.\n\n"
+                f"👇 Tap below to top up and unlock features for your group:"
+            ),
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("💳 Buy Credits", url=f"https://yourdomain.com/buy-credits?chat_id={group_chat_id}")]
+            ])
+        )
+    except Exception as e:
+        logger.error(f"Failed to DM admin {admin_user_id}: {e}")
+
+
 def handle_new_group_update(update_json):
     """
     Processes a Telegram update payload and adds a group to Firestore
@@ -94,6 +139,22 @@ def handle_new_group_update(update_json):
         # Add the group to Firestore using your client
         doc_id = firestore_client.create_group(data=group)
         logger.info("Group added to Firestore:", doc_id)
+
+        # After confirming it's pumpreelsbot:
+        group_chat_id = group.get('id')
+        group_title = group.get('title')
+
+        admins = await get_chat_administrators(group_chat_id)
+        if not admins:
+            logger.warning("No admins found, can't prompt to buy credits.")
+            return
+
+        # Find the creator or someone with can_manage_chat
+        for admin in admins:
+            if admin.status == 'creator' or admin.can_manage_chat:
+                admin_user_id = admin.user.id
+                await dm_admin_to_buy_credits(admin_user_id, group_title, group_chat_id)
+                break
     else:
         logger.info("New bot added is not pumpreelsbot. No action taken.")
 
@@ -439,7 +500,7 @@ async def pay_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     keyboard = [
-        [InlineKeyboardButton("💳 Pay with Crypto", url=checkout_url)],
+        [InlineKeyboardButton("💳 Pay with Bitcoin", url=checkout_url)],
         # add more rows for USDC, Lightning, etc.
     ]
 
@@ -456,6 +517,7 @@ def create_checkout_session(product_id: str, chat_id: int) -> str:
     payload = {
         "lineItems":  [{"productId": product_id}],
         "currency":   "USD",
+        "gateway":    {"managed": {"methods": [{"network": "Bitcoin"}]}},
         "successUrl": "https://google.com",
         "cancelUrl": "https://google.com",
         "metadata": [
