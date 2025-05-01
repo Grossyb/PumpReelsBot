@@ -39,8 +39,10 @@ RADOM_TEST_WEBHOOK_KEY = os.environ.get('RADOM_TEST_WEBHOOK_KEY')
 SUCCESS_URL  = "https://t.me/YourBot?start=paid"
 CANCEL_URL   = "https://t.me/YourBot?start=cancelled"
 
+# TESTING
+#     "100":  "6cdaa60f-4e45-48b9-bff8-2b06ed51873a",
 CREDIT_PLANS = {
-    "100":  "6cdaa60f-4e45-48b9-bff8-2b06ed51873a",
+    "100":  "7fcfb9f4-2b2a-4309-af77-b6ac7914fb8e",
     "500":  "b31886b4-fa4e-41e2-abb5-323f193fc1d8",
     "1000": "688ca38e-ad12-4198-81bc-062bbc7fadf5",
     "2500": "92d3a12c-16fd-45fa-9bec-2afb4fb60cd5",
@@ -611,7 +613,7 @@ async def pay_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     await cq.message.reply_text(
-        "Tap a payment option below to buy credits:",
+        "Your checkout session is ready:",
         reply_markup=InlineKeyboardMarkup(keyboard),
     )
 
@@ -627,9 +629,11 @@ def create_checkout_session(product_id: str, chat_id: int) -> str:
                 "managed": {
                     "methods": [
                         # MARK: CHANGE THESE TO PROD NETWORKS
-                        {"network": "BitcoinTestnet"},
-                        {"network": "SolanaDevnet"},
-                        {"network": "SepoliaTestnet"},
+                        {"network": "Bitcoin"},
+                        {"network": "Solana"},
+                        {"network": "Ethereum"},
+                        {"network": "Base"},
+                        {"network": "Fiat"},
                     ]
                 }
             },
