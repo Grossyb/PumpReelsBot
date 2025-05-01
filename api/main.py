@@ -14,6 +14,7 @@ from storage.firestore_client import FirestoreClient
 from storage.gcs_client import GCSClient
 from ai_services.pika_client import PikaClient
 from telegram import Update, KeyboardButton, InlineKeyboardButton, WebAppInfo, InlineKeyboardMarkup, ForceReply, ReplyKeyboardMarkup
+from telegram.constants import ChatType
 from telegram.error import BadRequest
 from telegram.ext import (
     Application,
@@ -63,6 +64,7 @@ if not TELEGRAM_TOKEN:
 
 # Create the Telegram Application (PTB v20+)
 application = Application.builder().token(TELEGRAM_TOKEN).build()
+
 
 
 async def get_chat_administrators(chat_id: int) -> list:
@@ -359,6 +361,10 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
     links to the mini app.
     """
     chat_id = update.effective_chat.id
+
+    if chat.type not in [ChatType.GROUP, ChatType.SUPERGROUP]:
+        await update.message.reply_text("Use this command in a group chat!")
+        return ConversationHandler.END
 
     group_data = firestore_client.get_group(str(chat_id))
 
