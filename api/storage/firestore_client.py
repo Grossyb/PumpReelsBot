@@ -35,6 +35,7 @@ class FirestoreClient:
         doc = doc_ref.get()
 
         if doc.exists:
+            doc['group_id'] = doc.id
             return doc.to_dict()
 
         return None

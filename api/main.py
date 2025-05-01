@@ -302,7 +302,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 🔹 Simply upload an image and select a theme—our AI will generate a high\-quality video in seconds\.
 
-📢 *To get started, add* [@pumpreels\\_bot](https://t.me/pumpreels_bot) *to your group and start creating\!* 🚀🔥
+📢 *To get started, add* [@pumpreels\\_bot](https://t.me/pumpreels_bot) *to your chat and you will receive a message with further instructions\!* 🚀🔥
 """
 
     await update.message.reply_text(
@@ -373,7 +373,7 @@ async def credits(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     # ✅ If one group, skip selection
     if len(groups) == 1:
-        context.user_data['selected_chat_id'] = groups[0]['chat_id']
+        context.user_data['selected_chat_id'] = groups[0]['group_id']
         return await show_credits_menu(update, context, groups[0])
 
     # 🎯 If multiple groups, prompt user to pick one
