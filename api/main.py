@@ -519,7 +519,9 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
 
 async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
+    group_data = firestore_client.get_group(chat_id)
     caption = (
+        f"{group_data.get('title')} has {group_data.get('credits')} credits remaining"
         "Generate your AI Video with our Mini App\\\n"
         f"📱 [Open Mini App](https://t.me/pumpreelsbot/pumpreelsapp?startapp={chat_id})\n\n"
         "OR ENTER\n"
@@ -619,7 +621,8 @@ async def pay_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         checkout_url = create_checkout_session(
             CREDIT_PLANS[credits_str],
-            group_id
+            group_id,
+            credits_str
         )
     except Exception:
         await cq.answer("❌ Couldn’t start checkout, try again.", show_alert=True)
@@ -635,7 +638,7 @@ async def pay_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-def create_checkout_session(product_id: str, chat_id: int) -> str:
+def create_checkout_session(product_id: str, chat_id: int, credits_str: str) -> str:
     """
     Returns a checkoutSessionUrl with telegram_group_id metadata.
     """
@@ -660,6 +663,10 @@ def create_checkout_session(product_id: str, chat_id: int) -> str:
             {
                 "key": "telegram_group_id",
                 "value": str(chat_id)
+            },
+            {
+                "key": "credits_str",
+                "value": credits_str
             }
         ],
         "expiresAt": 9999999999,
