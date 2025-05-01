@@ -109,7 +109,7 @@ async def dm_admin_to_buy_credits(admin_user_id: int, group_title: str, group_ch
         logger.error(f"Failed to DM admin {admin_user_id}: {e}")
 
 
-def handle_new_group_update(update_json):
+async def handle_new_group_update(update_json):
     """
     Processes a Telegram update payload and adds a group to Firestore
     when PumpReelsBot is added to the group.
@@ -592,7 +592,7 @@ async def telegram_webhook(request: Request):
     update_json = await request.json()
     logger.info(update_json)
     logger.info('\n==========\n')
-    handle_new_group_update(update_json)
+    await handle_new_group_update(update_json)
 
     update = Update.de_json(update_json, application.bot)
     await application.process_update(update)
