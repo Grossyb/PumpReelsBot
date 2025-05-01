@@ -15,13 +15,14 @@ class FirestoreClient:
         self.group_collection = self.db.collection('groups')
 
 
-    def create_group(self, data):
+    def create_group(self, data, creator_user_id):
         group_id = str(data['id'])
 
         doc_ref = self.group_collection.document(group_id)
         doc_ref.set({
             "title": data['title'],
             "type": data['type'],
+            "creator_id": creator_user_id,
             "credits": 0,
             "created_at": Timestamp.now()
         })

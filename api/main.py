@@ -139,8 +139,6 @@ async def handle_new_group_update(update_json):
     if username == 'pumpreelsbot':
         group = message.get('chat')
         # Add the group to Firestore using your client
-        doc_id = firestore_client.create_group(data=group)
-        logger.info("Group added to Firestore:", doc_id)
 
         # After confirming it's pumpreelsbot:
         group_chat_id = group.get('id')
@@ -154,9 +152,11 @@ async def handle_new_group_update(update_json):
         # Find the creator or someone with can_manage_chat
         for admin in admins:
             if admin.status == 'creator' or admin.can_manage_chat:
-                admin_user_id = admin.user.id
+                creator_user_id = admin.user.id
                 await dm_admin_to_buy_credits(admin_user_id, group_title, group_chat_id)
                 break
+        doc_id = firestore_client.create_group(data=group, creator_user_id=creator_user_id)
+        logger.info("Group added to Firestore:", doc_id)
     else:
         logger.info("New bot added is not pumpreelsbot. No action taken.")
 
