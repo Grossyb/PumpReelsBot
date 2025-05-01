@@ -373,6 +373,7 @@ async def credits(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     # ✅ If one group, skip selection
     if len(groups) == 1:
+        logger.info(groups)
         context.user_data['selected_chat_id'] = groups[0]['group_id']
         return await show_credits_menu(update, context, groups[0])
 
@@ -611,7 +612,16 @@ def create_checkout_session(product_id: str, chat_id: int) -> str:
     payload = {
         "lineItems":  [{"productId": product_id}],
         "currency":   "USD",
-        "gateway":    {"managed": {"methods": [{"network": "Bitcoin"}]}},
+        "gateway": {
+                "managed": {
+                    "methods": [
+                        # MARK: CHANGE THESE TO PROD NETWORKS
+                        {"network": "BitcoinTestnet"},
+                        {"network": "SolanaDevnet"},
+                        {"network": "SepoliaTestnet"},
+                    ]
+                }
+            },
         "successUrl": "https://google.com",
         "cancelUrl": "https://google.com",
         "metadata": [
