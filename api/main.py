@@ -99,10 +99,10 @@ async def dm_admin_to_buy_credits(admin_user_id: int, group_title: str, group_ch
         await application.bot.send_message(
             chat_id=admin_user_id,
             text=(
-                f"👋 Thanks for adding me to *{group_title}*!\n\n"
-                f"Before I can start working in the group, you’ll need to activate me by purchasing credits 💰.\n\n"
-                f"👇 Tap below to top up and pump your coin with PumpReels:\n\n"
-                f"You can always use [/]credits to purchase more credits later."
+                f"👋 Thanks for adding me to *{group_title.replace('-', '\\-')}*\\!\n\n"
+                f"Before I can start working in the group, you\\’ll need to activate me by purchasing credits 💰\\.\n\n"
+                f"👇 Tap below to top up and pump your coin with PumpReels\\:\n\n"
+                f"You can always use [\\/]credits to purchase more credits later\\."
             ),
             parse_mode="MarkdownV2",
             reply_markup=InlineKeyboardMarkup(
@@ -111,6 +111,7 @@ async def dm_admin_to_buy_credits(admin_user_id: int, group_title: str, group_ch
         )
     except Exception as e:
         logger.error(f"Failed to DM admin {admin_user_id}: {e}")
+
 
 
 async def handle_new_group_update(update_json):
