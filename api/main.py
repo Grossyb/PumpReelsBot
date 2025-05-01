@@ -155,7 +155,7 @@ async def handle_new_group_update(update_json):
         for admin in admins:
             if admin.status == 'creator' or admin.can_manage_chat:
                 creator_user_id = admin.user.id
-                await dm_admin_to_buy_credits(admin_user_id, group_title, group_chat_id)
+                await dm_admin_to_buy_credits(creator_user_id, group_title, group_chat_id)
                 break
         doc_id = firestore_client.create_group(data=group, creator_user_id=creator_user_id)
         logger.info("Group added to Firestore:", doc_id)
