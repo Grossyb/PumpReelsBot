@@ -332,10 +332,10 @@ async def show_credits_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, 
 """
 
     keyboard = [
-        [InlineKeyboardButton("2,500 Credits", callback_data=f"buy_2500_{group_data['chat_id']}"),
-         InlineKeyboardButton("6,250 Credits", callback_data=f"buy_6250_{group_data['chat_id']}")],
-        [InlineKeyboardButton("12,500 Credits", callback_data=f"buy_12500_{group_data['chat_id']}"),
-         InlineKeyboardButton("25,000 Credits", callback_data=f"buy_25000_{group_data['chat_id']}")]
+        [InlineKeyboardButton("2,500 Credits", callback_data="2500"),
+         InlineKeyboardButton("6,250 Credits", callback_data="6250")],
+        [InlineKeyboardButton("12,500 Credits", callback_data="12500"),
+         InlineKeyboardButton("25,000 Credits", callback_data="25000")]
     ]
 
     await message.reply_text(
@@ -374,12 +374,12 @@ async def credits(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # ✅ If one group, skip selection
     if len(groups) == 1:
         logger.info(groups)
-        context.user_data['selected_chat_id'] = groups[0]['group_id']
+        context.user_data['selected_group_id'] = groups[0]['group_id']
         return await show_credits_menu(update, context, groups[0])
 
     # 🎯 If multiple groups, prompt user to pick one
     keyboard = [
-        [InlineKeyboardButton(group["title"], callback_data=f"select_chat_{group['chat_id']}")]
+        [InlineKeyboardButton(group["title"], callback_data=f"select_chat_{group['group_id']}")]
         for group in groups
     ]
     await message.reply_text(
@@ -389,38 +389,38 @@ async def credits(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return SELECT_GROUP_FOR_CREDITS  # define this in your ConversationHandler
 
     # Default to 0 if no data found
-    credits = group_data.get('credits', 0) if group_data else 0
-    credit_info = f"""🚀 *PumpReels Video Credit System*
-
-🎥 *Your Current Credits:* `{credits}` credits (updated in real-time)
-💰 *1 Video (5 sec) = 25 credits* (5 credits per second)
-
-🔹 *Need more credits? Purchase below!*
-
-📦 *Bulk Credit Discounts (Best Value!)*
-Pre-purchase credits at a discounted rate and get more value!
-
-➤ *100 Videos (2,500 credits) →* `$140.00`  _(🚀 $1.40 per video)_
-➤ *250 Videos (6,250 credits) →* `$325.00`  _(🔥 $1.30 per video)_
-➤ *500 Videos (12,500 credits) →* `$550.00`  _(⚡ $1.10 per video)_
-➤ *1,000 Videos (25,000 credits) →* `$1,000.00`  _(💎 $1.00 per video)_
-"""
-
-    keyboard = [
-        [InlineKeyboardButton("2,500 Credits", callback_data="2500"),
-         InlineKeyboardButton("6,250 Credits", callback_data="6250")],
-        [InlineKeyboardButton("12,500 Credits", callback_data="12500"),
-         InlineKeyboardButton("25,000 Credits", callback_data="25000")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    await message.reply_text(
-        credit_info.strip(),
-        reply_markup=reply_markup,
-        parse_mode="Markdown"
-    )
-
-    return ConversationHandler.END
+#     credits = group_data.get('credits', 0) if group_data else 0
+#     credit_info = f"""🚀 *PumpReels Video Credit System*
+#
+# 🎥 *Your Current Credits:* `{credits}` credits (updated in real-time)
+# 💰 *1 Video (5 sec) = 25 credits* (5 credits per second)
+#
+# 🔹 *Need more credits? Purchase below!*
+#
+# 📦 *Bulk Credit Discounts (Best Value!)*
+# Pre-purchase credits at a discounted rate and get more value!
+#
+# ➤ *100 Videos (2,500 credits) →* `$140.00`  _(🚀 $1.40 per video)_
+# ➤ *250 Videos (6,250 credits) →* `$325.00`  _(🔥 $1.30 per video)_
+# ➤ *500 Videos (12,500 credits) →* `$550.00`  _(⚡ $1.10 per video)_
+# ➤ *1,000 Videos (25,000 credits) →* `$1,000.00`  _(💎 $1.00 per video)_
+# """
+#
+#     keyboard = [
+#         [InlineKeyboardButton("2,500 Credits", callback_data="2500"),
+#          InlineKeyboardButton("6,250 Credits", callback_data="6250")],
+#         [InlineKeyboardButton("12,500 Credits", callback_data="12500"),
+#          InlineKeyboardButton("25,000 Credits", callback_data="25000")]
+#     ]
+#     reply_markup = InlineKeyboardMarkup(keyboard)
+#
+#     await message.reply_text(
+#         credit_info.strip(),
+#         reply_markup=reply_markup,
+#         parse_mode="Markdown"
+#     )
+#
+#     return ConversationHandler.END
 
 
 async def pumpreels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -541,13 +541,13 @@ async def handle_group_selection(update: Update, context: ContextTypes.DEFAULT_T
     if not data.startswith("select_chat_"):
         return ConversationHandler.END
 
-    chat_id = data.replace("select_chat_", "")
-    group_data = firestore_client.get_group(chat_id)
+    group_id = data.replace("select_chat_", "")
+    group_data = firestore_client.get_group(group_id)
     if not group_data:
         await query.message.reply_text("❌ Group not found or deleted.")
         return ConversationHandler.END
 
-    context.user_data['selected_chat_id'] = chat_id
+    context.user_data['selected_group_id'] = group_id
     return await show_credits_menu(update, context, group_data)
 
 
@@ -581,22 +581,26 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def pay_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     cq = update.callback_query
-    credits = cq.data
-    chat_id = cq.message.chat.id
+    await cq.answer()
+    credits_str = cq.data
+    group_id = context.user_data.get('selected_group_id')
+
+    if not group_id:
+        await cq.message.reply_text("❌ Group context missing. Please restart the /credits flow.")
+        return
 
     # Build the Radom checkout
     try:
         checkout_url = create_checkout_session(
-            CREDIT_PLANS[credits],
-            chat_id
+            CREDIT_PLANS[credits_str],
+            group_id
         )
     except Exception:
         await cq.answer("❌ Couldn’t start checkout, try again.", show_alert=True)
         return
 
     keyboard = [
-        [InlineKeyboardButton("💳 Pay with Bitcoin", url=checkout_url)],
-        # add more rows for USDC, Lightning, etc.
+        [InlineKeyboardButton("💳 Go to Checkout Session", url=checkout_url)]
     ]
 
     await cq.message.reply_text(
