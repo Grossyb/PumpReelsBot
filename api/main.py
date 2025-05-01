@@ -100,9 +100,10 @@ async def dm_admin_to_buy_credits(admin_user_id: int, group_title: str, group_ch
             text=(
                 f"👋 Thanks for adding me to *{group_title}*!\n\n"
                 f"Before I can start working in the group, you’ll need to activate me by purchasing credits 💰.\n\n"
-                f"👇 Tap below to top up and unleash unrelenting hype in your group:"
+                f"👇 Tap below to top up and pump your coin with PumpReels:\n\n"
+                f"You can always use [/]credits to purchase more credits later."
             ),
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",
             reply_markup=InlineKeyboardMarkup(
                 [[InlineKeyboardButton("💳 Buy Credits", callback_data="credits")]]
             )
@@ -307,13 +308,79 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 
+async def show_credits_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, group_data: dict) -> int:
+    message = update.message or update.callback_query.message
+
+    credits = group_data.get('credits', 0)
+    group_title = group_data.get('title', 'your group')
+
+    credit_info = f"""🚀 *PumpReels Video Credit System – {group_title}*
+
+🎥 *Current Credits:* `{credits}` credits
+💰 *1 Video (5 sec) = 25 credits*
+
+📦 *Top Up Options:*
+➤ 2,500 credits → `$140.00`
+➤ 6,250 credits → `$325.00`
+➤ 12,500 credits → `$550.00`
+➤ 25,000 credits → `$1,000.00`
+"""
+
+    keyboard = [
+        [InlineKeyboardButton("2,500 Credits", callback_data=f"buy_2500_{group_data['chat_id']}"),
+         InlineKeyboardButton("6,250 Credits", callback_data=f"buy_6250_{group_data['chat_id']}")],
+        [InlineKeyboardButton("12,500 Credits", callback_data=f"buy_12500_{group_data['chat_id']}"),
+         InlineKeyboardButton("25,000 Credits", callback_data=f"buy_25000_{group_data['chat_id']}")]
+    ]
+
+    await message.reply_text(
+        credit_info.strip(),
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode="Markdown"
+    )
+    return ConversationHandler.END
+
+
 async def credits(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.callback_query:
         await update.callback_query.answer()
     message = update.message or update.callback_query.message
+    chat = update.effective_chat
+    user = update.effective_user
+    chat_id = chat.id
 
-    chat_id = update.effective_chat.id
-    group_data = firestore_client.get_group(str(chat_id))
+    # 🔒 Check 1: If this is a group/supergroup, reject it
+    if chat.type in [ChatType.GROUP, ChatType.SUPERGROUP]:
+        await message.reply_text(
+            f"⚠️ Please have the *admin of {chat.title}* top up your credits.",
+            parse_mode="Markdown"
+        )
+        return ConversationHandler.END
+
+    # 🧠 Get all groups this user manages
+    groups = firestore_client.get_groups_by_creator(user.id)
+    if not groups:
+        await message.reply_text(
+            "❌ You’re not an admin of any PumpReels groups.",
+            parse_mode="Markdown"
+        )
+        return ConversationHandler.END
+
+    # ✅ If one group, skip selection
+    if len(groups) == 1:
+        context.user_data['selected_chat_id'] = groups[0]['chat_id']
+        return await show_credits_menu(update, context, groups[0])
+
+    # 🎯 If multiple groups, prompt user to pick one
+    keyboard = [
+        [InlineKeyboardButton(group["title"], callback_data=f"select_chat_{group['chat_id']}")]
+        for group in groups
+    ]
+    await message.reply_text(
+        "🪙 Which group would you like to buy credits for?",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+    return SELECT_GROUP_FOR_CREDITS  # define this in your ConversationHandler
 
     # Default to 0 if no data found
     credits = group_data.get('credits', 0) if group_data else 0
@@ -376,12 +443,9 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
     credits = group_data.get('credits', 0)
 
     if credits == 0 or credits < VIDEO_CREDITS:
-        keyboard = [[InlineKeyboardButton("Buy Credits", callback_data="credits")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-
         await update.message.reply_text(
-            f"Your group has {credits} credits left. Please purchase more credits to continue.",
-            reply_markup=reply_markup
+            f"⚠️ Your group has {credits} credits left.\n"
+            f"The admin needs to buy more credits to continue the pump 🚀"
         )
         return ConversationHandler.END
 
@@ -461,6 +525,24 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
 #     )
 #     context.user_data["image_prompt_message_id"] = msg.message_id
 #     return IMAGE
+
+
+async def handle_group_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+
+    data = query.data
+    if not data.startswith("select_chat_"):
+        return ConversationHandler.END
+
+    chat_id = data.replace("select_chat_", "")
+    group_data = firestore_client.get_group(chat_id)
+    if not group_data:
+        await query.message.reply_text("❌ Group not found or deleted.")
+        return ConversationHandler.END
+
+    context.user_data['selected_chat_id'] = chat_id
+    return await show_credits_menu(update, context, group_data)
 
 
 async def handle_web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -550,6 +632,15 @@ def create_checkout_session(product_id: str, chat_id: int) -> str:
     logger.info("Radom body   %s", r.text)
     r.raise_for_status()
     return r.json()["checkoutSessionUrl"]
+
+
+ConversationHandler(
+    entry_points=[CommandHandler("credits", credits)],
+    states={
+        SELECT_GROUP_FOR_CREDITS: [CallbackQueryHandler(handle_group_selection, pattern="^select_chat_")]
+    },
+    fallbacks=[],
+)
 
 application.add_handler(CommandHandler("start", start))
 application.add_handler(CommandHandler("pumpreels", pumpreels))

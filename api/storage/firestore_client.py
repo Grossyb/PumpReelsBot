@@ -40,6 +40,15 @@ class FirestoreClient:
         return None
 
 
+    def get_groups_by_creator(self, creator_id):
+        """
+        Returns a list of all group documents where the given creator_id matches.
+        """
+        query = self.group_collection.where("creator_id", "==", creator_id)
+        docs = query.stream()
+        return [doc.to_dict() for doc in docs]
+
+
     def add_credits(self, group_id, amount):
         """
         Atomically add `amount` credits to the given `group_id`.
