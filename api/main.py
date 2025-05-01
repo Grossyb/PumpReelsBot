@@ -40,11 +40,13 @@ SUCCESS_URL  = "https://t.me/YourBot?start=paid"
 CANCEL_URL   = "https://t.me/YourBot?start=cancelled"
 
 CREDIT_PLANS = {
-    "2500":  "edb1f9eb-673b-4105-90ad-6c6bff8743bc",
-    "6250":  "8ef0e2c0-8efa-47f2-97cf-97dae84b4420",
-    "12500": "7dcbaadf-a6e1-4caa-af54-0474646c1bd8",
-    "25000": "65b3ad96-efa2-45d3-a970-82db6bae5993",
-}
+    "100":  "6cdaa60f-4e45-48b9-bff8-2b06ed51873a",
+    "500":  "b31886b4-fa4e-41e2-abb5-323f193fc1d8",
+    "1000": "688ca38e-ad12-4198-81bc-062bbc7fadf5",
+    "2500": "92d3a12c-16fd-45fa-9bec-2afb4fb60cd5",
+    "5000": "b9046661-1442-4d87-af62-1b598c957f12",
+    "10000": "a5ddd99e-d728-472c-ad51-53562653d1b8",
+
 CURRENCY = "USD"
 SELECT_GROUP_FOR_CREDITS = range(1)
 
@@ -332,10 +334,12 @@ async def show_credits_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, 
 """
 
     keyboard = [
-        [InlineKeyboardButton("2,500 Credits", callback_data="2500"),
-         InlineKeyboardButton("6,250 Credits", callback_data="6250")],
-        [InlineKeyboardButton("12,500 Credits", callback_data="12500"),
-         InlineKeyboardButton("25,000 Credits", callback_data="25000")]
+        [InlineKeyboardButton("100 Credits", callback_data="100"),
+         InlineKeyboardButton("500 Credits", callback_data="500")],
+        [InlineKeyboardButton("1,00 Credits", callback_data="1000"),
+         InlineKeyboardButton("2,500 Credits", callback_data="2500")]
+        [InlineKeyboardButton("5,00 Credits", callback_data="5000"),
+         InlineKeyboardButton("10,000 Credits", callback_data="10000")],
     ]
 
     await message.reply_text(
@@ -679,7 +683,7 @@ application.add_handler(generate_video_handler)
 # )
 application.add_handler(CallbackQueryHandler(
         pay_callback,
-        pattern=r"^(2500|6250|12500|25000)$"   # only our four buttons
+        pattern=r"^(100|500|1000|2500|5000|10000)$"   # only our four buttons
 ))
 application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_web_app_data))
 
