@@ -35,8 +35,9 @@ class FirestoreClient:
         doc = doc_ref.get()
 
         if doc.exists:
-            doc['group_id'] = doc.id
-            return doc.to_dict()
+            data = doc.to_dict()
+            data['group_id'] = doc.id
+            return data
 
         return None
 
@@ -47,7 +48,13 @@ class FirestoreClient:
         """
         query = self.group_collection.where("creator_id", "==", creator_id)
         docs = query.stream()
-        return [doc.to_dict() for doc in docs]
+        results = []
+        for doc in docs:
+            data = doc.to_dict()
+            data['group_id'] = doc.id
+            results.append(data)
+
+        return results
 
 
     def add_credits(self, group_id, amount):
