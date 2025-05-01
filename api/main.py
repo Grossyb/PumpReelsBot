@@ -36,8 +36,6 @@ VIDEO_CREDITS = 50
 
 RADOM_TEST_KEY = os.environ.get('RADOM_TEST_KEY')
 RADOM_TEST_WEBHOOK_KEY = os.environ.get('RADOM_TEST_WEBHOOK_KEY')
-SUCCESS_URL  = "https://t.me/YourBot?start=paid"
-CANCEL_URL   = "https://t.me/YourBot?start=cancelled"
 
 # TESTING
 #     "100":  "6cdaa60f-4e45-48b9-bff8-2b06ed51873a",
@@ -651,13 +649,13 @@ def create_checkout_session(product_id: str, chat_id: int) -> str:
                         {"network": "Bitcoin"},
                         {"network": "Solana"},
                         {"network": "Ethereum"},
-                        {"network": "Base"},
-                        {"network": "Fiat"},
+                        # {"network": "Base"},
+                        # {"network": "Fiat"},
                     ]
                 }
             },
-        "successUrl": "https://t.me/<bot_username>?start=payment_success",
-        "cancelUrl": "https://t.me/<bot_username>?start=payment_cancelled",
+        "successUrl": "https://t.me/pumpreels_bot?start=payment_success",
+        "cancelUrl": "https://t.me/pumpreels_bot?start=payment_cancelled",
         "metadata": [
             {
                 "key": "telegram_group_id",
