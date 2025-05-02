@@ -782,7 +782,7 @@ async def radom_webhook(request: Request):
 # ENDPOINTS FOR MINI APP
 @app.post("/getGroup")
 async def get_group(
-    group_id: str
+    group_id: str = Form(...),
 ):
     group_data = firestore_client.get_group(group_id)
     return group_data
