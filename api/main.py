@@ -531,7 +531,7 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
 
 async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
-    group_data = firestore_client.get_group(chat_id)
+    group_data = firestore_client.get_group(str(chat_id))
     caption = (
         f"{group_data.get('title')} has {group_data.get('credits')} credits remaining\n"
         f"Generate your AI Video with our Mini App\\\n"
