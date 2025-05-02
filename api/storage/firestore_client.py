@@ -49,42 +49,41 @@ class FirestoreClient:
 
         return results
 
-    @firestore.transactional
-    def _transaction_add(self, transaction, doc_ref, amount):
-        snapshot = doc_ref.get(transaction=transaction)
-
-        if not snapshot.exists:
-            transaction.set(doc_ref, {
-                "credits": amount,
-                "created_at": firestore.SERVER_TIMESTAMP
-            })
-        else:
-            current_credits = snapshot.get("credits", 0)
-            transaction.update(doc_ref, {
-                "credits": current_credits + amount
-            })
-
     def add_credits(self, group_id, amount):
         doc_ref = self.group_collection.document(group_id)
+
+        @firestore.transactional
+        def transaction_add(transaction):
+            snapshot = doc_ref.get(transaction=transaction)
+            if not snapshot.exists:
+                transaction.set(doc_ref, {
+                    "credits": amount,
+                    "created_at": firestore.SERVER_TIMESTAMP
+                })
+            else:
+                current_credits = snapshot.get("credits", 0)
+                transaction.update(doc_ref, {
+                    "credits": current_credits + amount
+                })
+
         transaction = self.db.transaction()
-        self._transaction_add(transaction, doc_ref, amount)
+        transaction_add(transaction)
 
-    @firestore.transactional
-    def _transaction_decrement(self, transaction, doc_ref, amount):
-        snapshot = doc_ref.get(transaction=transaction)
-
-        if not snapshot.exists:
-            raise ValueError("Group does not exist")
-
-        current_credits = snapshot.get("credits", 0)
-        if current_credits < amount:
-            raise ValueError("Not enough credits")
-
-        transaction.update(doc_ref, {
-            "credits": current_credits - amount
-        })
 
     def decrement_credits(self, group_id, amount):
         doc_ref = self.group_collection.document(group_id)
+
+        @firestore.transactional
+        def transaction_decrement(transaction):
+            snapshot = doc_ref.get(transaction=transaction)
+            if not snapshot.exists:
+                raise ValueError("Group does not exist")
+            current_credits = snapshot.get("credits", 0)
+            if current_credits < amount:
+                raise ValueError("Not enough credits")
+            transaction.update(doc_ref, {
+                "credits": current_credits - amount
+            })
+
         transaction = self.db.transaction()
-        self._transaction_decrement(transaction, doc_ref, amount)
+        transaction_decrement(transaction)
