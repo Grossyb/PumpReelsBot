@@ -219,7 +219,7 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int, user_ident
 
             elif status in ['failed', 'canceled']:
                 try:
-                    firestore_client.add_credits(chat_id, VIDEO_CREDITS)
+                    firestore_client.add_credits(str(chat_id), VIDEO_CREDITS)
                     logger.info(f"Refunded {VIDEO_CREDITS} credit to group %s", group_id)
                 except Exception as e:
                     logger.error("Failed to refund credit to %s: %s", group_id, e)
@@ -247,7 +247,7 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
 
     # MARK: DECREMENT CREDITS
     try:
-        firestore_client.decrement_credits(chat_id, VIDEO_CREDITS)
+        firestore_client.decrement_credits(str(chat_id), VIDEO_CREDITS)
     except ValueError as e:
         await update.message.reply_text(
             f"⚠️ Your group ran out of credits!"
