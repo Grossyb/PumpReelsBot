@@ -32,7 +32,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-VIDEO_CREDITS = 50
+VIDEO_CREDITS = 100
 
 RADOM_TEST_KEY = os.environ.get('RADOM_TEST_KEY')
 RADOM_TEST_WEBHOOK_KEY = os.environ.get('RADOM_TEST_WEBHOOK_KEY')
@@ -218,8 +218,12 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int, user_ident
                     return None
 
             elif status in ['failed', 'canceled']:
-                logger.error("Task failed or was canceled: %s", video)
-                return Nonea
+                try:
+                    firestore_client.add_credits(group_id, VIDEO_CREDITS)
+                    logger.info(f"Refunded {VIDEO_CREDITS} credit to group %s", group_id)
+                except Exception as e:
+                    logger.error("Failed to refund credit to %s: %s", group_id, e)
+                return None
 
             else:
                 # Handle unexpected status values with a log
@@ -240,6 +244,14 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int, user_ident
 async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prompt_text: str):
 
     # MARK: DECREMENT CREDITS
+    try:
+        firestore_client.decrement_credits(group_id, VIDEO_CREDITS)
+    except ValueError as e:
+        await update.message.reply_text(
+            f"⚠️ Your group ran out of credits!"
+            f"The admin needs to buy more credits to continue the pump 🚀"
+        )
+        return ConversationHandler.END
 
     chat_id = update.effective_chat.id
     user_identifier = update.message.from_user.username or update.message.from_user.first_name
@@ -324,7 +336,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 🔹 Simply upload an image and select a theme—our AI will generate a high\-quality video in seconds\.
 
-📢 *To get started, add* [@pumpreels\\_bot](https://t.me/pumpreels_bot) *to your chat and you will receive a message with further instructions\!* 🚀🔥
+📢 *To get started, add* [@pumpreels\\_bot](https://t.me/pumpreelsbot) *to your chat and you will receive a message with further instructions\!* 🚀🔥
 """
 
     await update.message.reply_text(
@@ -629,7 +641,7 @@ async def pay_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     keyboard = [
-        [InlineKeyboardButton("💳 Go to Checkout Session", url=checkout_url)]
+        [InlineKeyboardButton(f"💳 Get {credits_str} credits", url=checkout_url)]
     ]
 
     await cq.message.reply_text(
@@ -657,8 +669,8 @@ def create_checkout_session(product_id: str, chat_id: int, credits_str: str) -> 
                     ]
                 }
             },
-        "successUrl": "https://t.me/pumpreels_bot?start=payment_success",
-        "cancelUrl": "https://t.me/pumpreels_bot?start=payment_cancelled",
+        "successUrl": "https://t.me/pumpreelsbot?start=payment_success",
+        "cancelUrl": "https://t.me/pumpreelsbot?start=payment_cancelled",
         "metadata": [
             {
                 "key": "telegram_group_id",
@@ -768,16 +780,33 @@ async def radom_webhook(request: Request):
 
 
 # ENDPOINTS FOR MINI APP
+@app.post("/getGroup")
+async def get_group(
+    group_id: str
+):
+    group_data = firestore_client.get_group(chat_id)
+    return group_data
+
+
 @app.post("/generateVideo")
 async def generate_video(
     prompt_text: str = Form(...),
     image: UploadFile = File(...),
+    group_id: str = Form(...)
 ):
     """
     1) Receives an image + prompt text.
     2) Calls PikaClient to start video generation.
     3) Returns an immediate response with video_id, not the final video.
     """
+
+    try:
+        firestore_client.decrement_credits(group_id, VIDEO_CREDITS)
+    except ValueError as e:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "insufficient_credits", "message": "Your group ran out of credits! The admin needs to buy more credits to continue the pump 🚀"}
+        )
 
     # Read the uploaded file into memory
     try:
@@ -825,7 +854,8 @@ async def generate_video(
 
 @app.get("/getVideoStatus")
 async def get_video_status(
-    video_id: str = Query(..., description="The ID of the video to poll")
+    video_id: str,
+    group_id: str
 ):
     """
     1) Takes a 'video_id' as a query param.
@@ -850,6 +880,13 @@ async def get_video_status(
     status = video_data.get('status', 'unknown')
     progress = video_data.get('progress', 0)
     url = video_data.get('url', '')
+
+    if status in ["failed", "canceled"]:
+        try:
+            firestore_client.add_credits(group_id, VIDEO_CREDITS)
+            logger.info("Refunded %s credits to group %s for failed video %s", VIDEO_CREDITS, group_id, video_id)
+        except Exception as e:
+            logger.error("Failed to refund credits to group %s: %s", group_id, e)
 
     # If you want to return the entire dictionary:
     return {

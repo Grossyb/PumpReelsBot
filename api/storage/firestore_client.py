@@ -60,7 +60,7 @@ class FirestoreClient:
     def add_credits(self, group_id, amount):
         """
         Atomically add `amount` credits to the given `group_id`.
-        • If the group document doesn’t exist, it will be created with the initial balance.
+        If the group document doesn’t exist, it will be created.
         """
         doc_ref = self.group_collection.document(group_id)
 
@@ -70,15 +70,13 @@ class FirestoreClient:
                 # Group not yet in DB → create with the starting credits
                 transaction.set(ref, {
                     "credits": amount,
-                    "created_at": Timestamp.now(),   # optional: if you want metadata
+                    "created_at": firestore.SERVER_TIMESTAMP,  # or Timestamp.now()
                 })
-                return
+            else:
+                current_credits = snapshot.get("credits", 0)
+                new_credits = current_credits + amount
+                transaction.update(ref, {"credits": new_credits})
 
-        current_credits = snapshot.get("credits", default=0)
-        new_credits = current_credits + amount
-        transaction.update(ref, {"credits": new_credits})
-
-        # Run the anonymous transactional function
         self.db.run_transaction(lambda t: _transaction_add(t, doc_ref))
 
 
@@ -88,12 +86,13 @@ class FirestoreClient:
         def transaction_decrement(transaction, ref):
             snapshot = ref.get(transaction=transaction)
             if not snapshot.exists:
-                # Document does not exist; no action or create with zero credits if needed
-                # Optional: transaction.set(ref, {"credits": 0})
-                return
+                raise ValueError("Group does not exist")
 
             current_credits = snapshot.get("credits", 0)
-            new_credits = max(current_credits - amount, 0)
+            if current_credits < amount:
+                raise ValueError("Not enough credits")
+
+            new_credits = current_credits - amount
             transaction.update(ref, {"credits": new_credits})
 
         self.db.run_transaction(lambda t: transaction_decrement(t, doc_ref))
