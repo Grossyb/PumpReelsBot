@@ -61,7 +61,7 @@ class FirestoreClient:
                     "created_at": firestore.SERVER_TIMESTAMP
                 })
             else:
-                current_credits = snapshot.get("credits", 0)
+                current_credits = snapshot.get("credits") or 0
                 transaction.update(doc_ref, {
                     "credits": current_credits + amount
                 })
@@ -78,7 +78,7 @@ class FirestoreClient:
             snapshot = doc_ref.get(transaction=transaction)
             if not snapshot.exists:
                 raise ValueError("Group does not exist")
-            current_credits = snapshot.get("credits", 0)
+            current_credits = snapshot.get("credits") or 0
             if current_credits < amount:
                 raise ValueError("Not enough credits")
             transaction.update(doc_ref, {
