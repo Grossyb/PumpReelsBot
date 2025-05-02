@@ -785,7 +785,7 @@ async def radom_webhook(request: Request):
 async def get_group(
     group_id: str
 ):
-    group_data = firestore_client.get_group(chat_id)
+    group_data = firestore_client.get_group(group_id)
     return group_data
 
 
