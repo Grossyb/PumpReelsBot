@@ -219,7 +219,7 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int, user_ident
 
             elif status in ['failed', 'canceled']:
                 try:
-                    firestore_client.add_credits(group_id, VIDEO_CREDITS)
+                    firestore_client.add_credits(chat_id, VIDEO_CREDITS)
                     logger.info(f"Refunded {VIDEO_CREDITS} credit to group %s", group_id)
                 except Exception as e:
                     logger.error("Failed to refund credit to %s: %s", group_id, e)
@@ -242,19 +242,18 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int, user_ident
 # deletes temporary files and bot messages, and sends the final video.
 # ------------------
 async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prompt_text: str):
+    chat_id = update.effective_chat.id
+    user_identifier = update.message.from_user.username or update.message.from_user.first_name
 
     # MARK: DECREMENT CREDITS
     try:
-        firestore_client.decrement_credits(group_id, VIDEO_CREDITS)
+        firestore_client.decrement_credits(chat_id, VIDEO_CREDITS)
     except ValueError as e:
         await update.message.reply_text(
             f"⚠️ Your group ran out of credits!"
             f"The admin needs to buy more credits to continue the pump 🚀"
         )
         return ConversationHandler.END
-
-    chat_id = update.effective_chat.id
-    user_identifier = update.message.from_user.username or update.message.from_user.first_name
 
     processing_msg = await application.bot.send_animation(
         chat_id=chat_id,
