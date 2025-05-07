@@ -545,7 +545,7 @@ async def handle_group_selection(update: Update, context: ContextTypes.DEFAULT_T
 
     data = query.data
     logging.info(' --- TESTING --- ')
-    logging.info(data)
+    logging.info(f'data received: {data}')
     if not data.startswith("select_chat_"):
         return ConversationHandler.END
 
