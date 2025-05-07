@@ -726,10 +726,9 @@ generate_video_handler = MessageHandler(
     generate_video_command
 )
 application.add_handler(generate_video_handler)
-# application.add_handler(CommandHandler("credits", credits))
-# application.add_handler(
-#     CallbackQueryHandler(credits, pattern=r"^credits$")
-# )
+application.add_handler(
+    CallbackQueryHandler(credits, pattern=r"^credits$")
+)
 application.add_handler(CallbackQueryHandler(
         pay_callback,
         pattern=r"^(100|500|1000|2500|5000|10000)$"
