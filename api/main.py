@@ -165,7 +165,7 @@ async def handle_new_group_update(update_json):
                 await dm_admin_to_buy_credits(creator_user_id, group_title, group_chat_id)
                 break
         doc_id = firestore_client.create_group(data=group, creator_user_id=creator_user_id)
-        logger.info("Group added to Firestore:", doc_id)
+        logger.info(f"Group added to Firestore: {doc_id}")
     else:
         logger.info("New bot added is not pumpreelsbot. No action taken.")
 
@@ -298,7 +298,7 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
         caption = f"@{user_identifier} your video is ready!\n\n{prompt_text}"
         await application.bot.send_video(chat_id=chat_id, video=video_url, caption=caption)
     else:
-        await application.bot.send_message(chat_id=chat_id, text="Sorry, an error occurred while sprocessing your video.")
+        await application.bot.send_message(chat_id=chat_id, text="Sorry, an error occurred while processing your video.")
 
 # ------------------
 # Telegram Handlers (Async)
@@ -391,6 +391,8 @@ async def credits(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = update.effective_user
     chat_id = chat.id
 
+    logger.info('CHECK 1')
+
     # 🔒 Check 1: If this is a group/supergroup, reject it
     if chat.type in [ChatType.GROUP, ChatType.SUPERGROUP]:
         await message.reply_text(
@@ -408,11 +410,15 @@ async def credits(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         )
         return ConversationHandler.END
 
+    logger.info('CHECK 2')
+
     # ✅ If one group, skip selection
     if len(groups) == 1:
         logger.info(groups)
         context.user_data['selected_group_id'] = groups[0]['group_id']
         return await show_credits_menu(update, context, groups[0])
+
+    logger.info('CHECK 3')
 
     # 🎯 If multiple groups, prompt user to pick one
     keyboard = [
@@ -626,7 +632,7 @@ async def pay_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     group_id = context.user_data.get('selected_group_id')
 
     if not group_id:
-        await cq.message.reply_text("❌ Group context missing. Please restart the /credits flow.")
+        await cq.message.reply_text("❌Command timed out. Please restart the /credits flow.")
         return
 
     # Build the Radom checkout
@@ -726,7 +732,7 @@ application.add_handler(generate_video_handler)
 # )
 application.add_handler(CallbackQueryHandler(
         pay_callback,
-        pattern=r"^(100|500|1000|2500|5000|10000)$"   # only our four buttons
+        pattern=r"^(100|500|1000|2500|5000|10000)$"
 ))
 application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_web_app_data))
 
