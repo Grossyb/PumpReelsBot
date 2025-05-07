@@ -543,10 +543,9 @@ async def handle_group_selection(update: Update, context: ContextTypes.DEFAULT_T
     query = update.callback_query
     await query.answer()
 
+    data = query.data
     logging.info(' --- TESTING --- ')
     logging.info(data)
-
-    data = query.data
     if not data.startswith("select_chat_"):
         return ConversationHandler.END
 
@@ -727,8 +726,8 @@ app.add_middleware(
 async def telegram_webhook(request: Request):
     update_json = await request.json()
     # MARK: GET RID OF THIS EVENTUALLY
-    logger.info(update_json)
-    logger.info('\n==========\n')
+    # logger.info(update_json)
+    # logger.info('\n==========\n')
     await handle_new_group_update(update_json)
 
     update = Update.de_json(update_json, application.bot)
