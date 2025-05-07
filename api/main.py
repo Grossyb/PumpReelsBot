@@ -118,8 +118,6 @@ async def dm_admin_to_buy_credits(admin_user_id: int, group_title: str, group_ch
         logger.error(f"Failed to DM admin {admin_user_id}: {e}")
 
 
-
-
 async def handle_new_group_update(update_json):
     """
     Processes a Telegram update payload and adds a group to Firestore
@@ -669,7 +667,10 @@ def create_checkout_session(product_id: str, chat_id: int, credits_str: str) -> 
 
 
 credits_conversation_handler = ConversationHandler(
-    entry_points=[CommandHandler("credits", credits)],
+    entry_points=[
+        CommandHandler("credits", credits),
+        CallbackQueryHandler(credits, pattern=r"^credits$"),
+    ],
     states={
         SELECT_GROUP_FOR_CREDITS: [
             CallbackQueryHandler(handle_group_selection, pattern=r"^select_chat_-?\d+")
@@ -688,9 +689,9 @@ generate_video_handler = MessageHandler(
     generate_video_command
 )
 application.add_handler(generate_video_handler)
-application.add_handler(
-    CallbackQueryHandler(credits, pattern=r"^credits$")
-)
+# application.add_handler(
+#     CallbackQueryHandler(credits, pattern=r"^credits$")
+# )
 application.add_handler(CallbackQueryHandler(
         pay_callback,
         pattern=r"^(100|500|1000|2500|5000|10000)$"
