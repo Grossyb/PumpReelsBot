@@ -391,8 +391,6 @@ async def credits(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = update.effective_user
     chat_id = chat.id
 
-    logger.info('CHECK 1')
-
     # 🔒 Check 1: If this is a group/supergroup, reject it
     if chat.type in [ChatType.GROUP, ChatType.SUPERGROUP]:
         await message.reply_text(
@@ -410,15 +408,11 @@ async def credits(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         )
         return ConversationHandler.END
 
-    logger.info('CHECK 2')
-
     # ✅ If one group, skip selection
     if len(groups) == 1:
         logger.info(groups)
         context.user_data['selected_group_id'] = groups[0]['group_id']
         return await show_credits_menu(update, context, groups[0])
-
-    logger.info('CHECK 3')
 
     # 🎯 If multiple groups, prompt user to pick one
     keyboard = [
@@ -429,41 +423,7 @@ async def credits(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         "🪙 Which group would you like to buy credits for?",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
-    return SELECT_GROUP_FOR_CREDITS  # define this in your ConversationHandler
-
-    # Default to 0 if no data found
-#     credits = group_data.get('credits', 0) if group_data else 0
-#     credit_info = f"""🚀 *PumpReels Video Credit System*
-#
-# 🎥 *Your Current Credits:* `{credits}` credits (updated in real-time)
-# 💰 *1 Video (5 sec) = 25 credits* (5 credits per second)
-#
-# 🔹 *Need more credits? Purchase below!*
-#
-# 📦 *Bulk Credit Discounts (Best Value!)*
-# Pre-purchase credits at a discounted rate and get more value!
-#
-# ➤ *100 Videos (2,500 credits) →* `$140.00`  _(🚀 $1.40 per video)_
-# ➤ *250 Videos (6,250 credits) →* `$325.00`  _(🔥 $1.30 per video)_
-# ➤ *500 Videos (12,500 credits) →* `$550.00`  _(⚡ $1.10 per video)_
-# ➤ *1,000 Videos (25,000 credits) →* `$1,000.00`  _(💎 $1.00 per video)_
-# """
-#
-#     keyboard = [
-#         [InlineKeyboardButton("2,500 Credits", callback_data="2500"),
-#          InlineKeyboardButton("6,250 Credits", callback_data="6250")],
-#         [InlineKeyboardButton("12,500 Credits", callback_data="12500"),
-#          InlineKeyboardButton("25,000 Credits", callback_data="25000")]
-#     ]
-#     reply_markup = InlineKeyboardMarkup(keyboard)
-#
-#     await message.reply_text(
-#         credit_info.strip(),
-#         reply_markup=reply_markup,
-#         parse_mode="Markdown"
-#     )
-#
-#     return ConversationHandler.END
+    return SELECT_GROUP_FOR_CREDITS
 
 
 async def pumpreels(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -582,6 +542,9 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
 async def handle_group_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
+
+    logging.info(' --- TESTING --- ')
+    logging.info(data)
 
     data = query.data
     if not data.startswith("select_chat_"):
