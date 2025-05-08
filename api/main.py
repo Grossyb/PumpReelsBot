@@ -315,7 +315,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             )
             return ConversationHandler.END
 
-        elif payload == "payment_cancel":
+        elif payload == "payment_cancelled":
             await update.message.reply_text(
                 "❌ Payment was canceled. You can try again with /credits.",
                 parse_mode="MarkdownV2"
