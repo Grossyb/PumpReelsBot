@@ -373,7 +373,7 @@ async def show_credits_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, 
          InlineKeyboardButton("10,000 Credits", callback_data="100000")]
     ]
 
-    await credit_info_msg = message.reply_text(
+    credit_info_msg = await message.reply_text(
         credit_info.strip(),
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode="Markdown"
