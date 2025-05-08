@@ -92,7 +92,7 @@ class FirestoreClient:
             # Mark as confirmed
             doc.reference.update({
                 "status": "confirmed",
-                "confirmed_at": Timestampt.now()
+                "confirmed_at": Timestamp.now()
             })
 
             return group_id
