@@ -40,12 +40,12 @@ RADOM_TEST_WEBHOOK_KEY = os.environ.get('RADOM_TEST_WEBHOOK_KEY')
 # TESTING
 #     "100":  "6cdaa60f-4e45-48b9-bff8-2b06ed51873a",
 CREDIT_PLANS = {
-    "100":  "7fcfb9f4-2b2a-4309-af77-b6ac7914fb8e",
-    "500":  "b31886b4-fa4e-41e2-abb5-323f193fc1d8",
-    "1000": "688ca38e-ad12-4198-81bc-062bbc7fadf5",
-    "2500": "92d3a12c-16fd-45fa-9bec-2afb4fb60cd5",
-    "5000": "b9046661-1442-4d87-af62-1b598c957f12",
-    "10000": "a5ddd99e-d728-472c-ad51-53562653d1b8"
+    "1000":  "7fcfb9f4-2b2a-4309-af77-b6ac7914fb8e",
+    "5000":  "b31886b4-fa4e-41e2-abb5-323f193fc1d8",
+    "10000": "688ca38e-ad12-4198-81bc-062bbc7fadf5",
+    "25000": "92d3a12c-16fd-45fa-9bec-2afb4fb60cd5",
+    "50000": "b9046661-1442-4d87-af62-1b598c957f12",
+    "100000": "a5ddd99e-d728-472c-ad51-53562653d1b8"
 }
 
 CURRENCY = "USD"
@@ -356,28 +356,29 @@ async def show_credits_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, 
 💰 *1 Video (5 sec) = 100 credits*
 
 📦 *Top Up Options:*
-➤ 100 credits → `$9.50`
-➤ 500 credits → `$45.00`
-➤ 1,00 credits → `$88.00`
-➤ 2,500 credits → `$212.50`
-➤ 5,000 credits → `$420.00`
-➤ 10,000 credits → `$800.00`
+➤ 1,000 credits → `$9.50`
+➤ 5,000 credits → `$45.00`
+➤ 10,000 credits → `$88.00`
+➤ 25,000 credits → `$212.50`
+➤ 50,000 credits → `$420.00`
+➤ 100,000 credits → `$800.00`
 """
 
     keyboard = [
-        [InlineKeyboardButton("100 Credits", callback_data="100"),
-         InlineKeyboardButton("500 Credits", callback_data="500")],
-        [InlineKeyboardButton("1,000 Credits", callback_data="1000"),
-         InlineKeyboardButton("2,500 Credits", callback_data="2500")],
-        [InlineKeyboardButton("5,000 Credits", callback_data="5000"),
-         InlineKeyboardButton("10,000 Credits", callback_data="10000")]
+        [InlineKeyboardButton("100 Credits", callback_data="1000"),
+         InlineKeyboardButton("500 Credits", callback_data="5000")],
+        [InlineKeyboardButton("1,000 Credits", callback_data="10000"),
+         InlineKeyboardButton("2,500 Credits", callback_data="25000")],
+        [InlineKeyboardButton("5,000 Credits", callback_data="50000"),
+         InlineKeyboardButton("10,000 Credits", callback_data="100000")]
     ]
 
-    await message.reply_text(
+    await credit_info_msg = message.reply_text(
         credit_info.strip(),
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode="Markdown"
     )
+    context.user_data['credit_info_msg_id'] = credit_info_msg.message_id
     return ConversationHandler.END
 
 
@@ -417,10 +418,11 @@ async def credits(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         [InlineKeyboardButton(group["title"], callback_data=f"select_chat_{group['group_id']}")]
         for group in groups
     ]
-    await message.reply_text(
+    select_group_msg = await message.reply_text(
         "🪙 Which group would you like to buy credits for?",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
+    context.user_data['select_group_msg_id'] = select_group_msg.message_id
     return SELECT_GROUP_FOR_CREDITS
 
 
@@ -540,6 +542,13 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
 async def handle_group_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
+
+    select_group_msg_id = context.user_data.get("select_group_msg_id")
+    if select_group_msg_id:
+        try:
+            await query.message.delete()
+        except Exception as e:
+            logger.warning(f"Could not delete group selection message: {e}")
 
     data = query.data
     logging.info(' --- TESTING --- ')
@@ -694,7 +703,7 @@ application.add_handler(generate_video_handler)
 # )
 application.add_handler(CallbackQueryHandler(
         pay_callback,
-        pattern=r"^(100|500|1000|2500|5000|10000)$"
+        pattern=r"^(1000|5000|10000|25000|50000|100000)$"
 ))
 application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_web_app_data))
 
