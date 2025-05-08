@@ -11,6 +11,94 @@ class FirestoreClient:
 
         self.db = firestore.client()
         self.group_collection = self.db.collection('groups')
+        self.transaction_collection = self.db.collection('transactions')
+
+
+    def create_transaction(self, data: dict):
+        """
+        Create a transaction document in Firestore based on Radom's managedPayment webhook payload.
+        """
+        try:
+            checkout = data["radomData"]["checkoutSession"]
+            payment = data["eventData"]["managedPayment"]
+            tx = payment["transactions"][0]  # Assuming 1 transaction per payment
+
+            # Extract metadata
+            metadata = {item["key"]: item["value"] for item in checkout.get("metadata", [])}
+            group_id = metadata.get("telegram_group_id")
+            credits = int(metadata.get("credits_str", 0))
+
+            doc_id = checkout["checkoutSessionId"]
+
+            # Essential fields
+            payment_id = doc_id
+            transaction_hash = tx.get("transactionHash")
+            status = "pending"
+            created_at = Timestamp.now()
+
+            # Helpful additional fields
+            network = tx.get("network")
+            ticker = tx.get("ticker")
+            amount = tx.get("amount")
+            sender_address = tx.get("senderAddresses", [{}])[0].get("address")
+
+            usd_value = payment["paymentSummary"].get("grossAmount")
+            net_amount = payment["paymentSummary"].get("netAmount")
+            network_fee_amount = payment["paymentSummary"].get("networkFeeAmount")
+
+            # Firestore document
+            transaction_doc = {
+                "group_id": group_id,
+                "credits": credits,
+                "status": status,
+                "transaction_hash": transaction_hash,
+                "network": network,
+                "ticker": ticker,
+                "amount": amount,
+                "usd_value": usd_value,
+                "net_amount": net_amount,
+                "network_fee_amount": network_fee_amount,
+                "sender_address": sender_address,
+                "created_at": created_at,
+                "confirmed_at": None
+            }
+
+            self.transaction_collection.document(payment_id).set(transaction_doc)
+
+        except Exception as e:
+            print(f"Failed to create transaction: {e}")
+            raise e
+
+
+    def confirm_transaction_by_tx_hash(self, transaction_hash: str):
+        """
+        Confirm a transaction based on its blockchain transaction hash.
+        Adds credits to the appropriate group and updates the transaction status.
+        """
+        docs = self.transaction_collection.where("transaction_hash", "==", transaction_hash).limit(1).stream()
+
+        for doc in docs:
+            tx = doc.to_dict()
+
+            if tx.get("status") == "confirmed":
+                return "already_confirmed"
+
+            group_id = tx.get("group_id")
+            credits = tx.get("credits")
+
+            # Add credits to the group
+            self.add_credits(group_id, credits)
+
+            # Mark as confirmed
+            doc.reference.update({
+                "status": "confirmed",
+                "confirmed_at": Timestampt.now()
+            })
+
+            return group_id
+
+        return None
+
 
     def create_group(self, data, creator_user_id):
         group_id = str(data['id'])

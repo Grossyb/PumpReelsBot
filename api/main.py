@@ -310,14 +310,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
         if payload == "payment_success":
             await update.message.reply_text(
-                "✅ Payment successful! Your group can start generating videos",
+                "✅ Payment successful\\! Your group can start generating videos",
                 parse_mode="MarkdownV2"
             )
             return ConversationHandler.END
 
         elif payload == "payment_cancelled":
             await update.message.reply_text(
-                "❌ Payment was canceled. You can try again with /credits.",
+                "❌ Payment was canceled. You can try again with /credits",
                 parse_mode="MarkdownV2"
             )
             return ConversationHandler.END
@@ -365,12 +365,12 @@ async def show_credits_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, 
 """
 
     keyboard = [
-        [InlineKeyboardButton("100 Credits", callback_data="1000"),
-         InlineKeyboardButton("500 Credits", callback_data="5000")],
-        [InlineKeyboardButton("1,000 Credits", callback_data="10000"),
-         InlineKeyboardButton("2,500 Credits", callback_data="25000")],
-        [InlineKeyboardButton("5,000 Credits", callback_data="50000"),
-         InlineKeyboardButton("10,000 Credits", callback_data="100000")]
+        [InlineKeyboardButton("1,000 Credits", callback_data="1000"),
+         InlineKeyboardButton("5,000 Credits", callback_data="5000")],
+        [InlineKeyboardButton("10,000 Credits", callback_data="10000"),
+         InlineKeyboardButton("25,000 Credits", callback_data="25000")],
+        [InlineKeyboardButton("50,000 Credits", callback_data="50000"),
+         InlineKeyboardButton("100,000 Credits", callback_data="100000")]
     ]
 
     credit_info_msg = await message.reply_text(
@@ -494,6 +494,34 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
     await process_video(update, context, prompt_text)
 
 
+async def send_group_mini_app_card(group_id: str):
+    group_data = firestore_client.get_group(group_id)
+    if not group_data:
+        return
+
+    caption = (
+        f"{group_data.get('title')} has {group_data.get('credits')} credits remaining\n"
+        f"Generate your AI Video with our Mini App\\\n"
+        f"📱 [Open Mini App](https://t.me/pumpreelsbot/pumpreelsapp?startapp={group_id})\n\n"
+        f"OR ENTER\n"
+        f"\\/generate\\_video \\[your prompt\\] and attach an image to create your AI video instantly\\\n\n"
+        f"Powered by \\@PumpReelsBot"
+    )
+
+    keyboard = [
+        [InlineKeyboardButton(text="📱Open Mini App", url=f"https://t.me/pumpreelsbot/pumpreelsapp?startapp={group_id}")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await application.bot.send_animation(
+        chat_id=int(group_id),
+        animation="https://pumpreels-mini-app.netlify.app/rendering.gif",
+        caption=caption,
+        parse_mode="MarkdownV2",
+        reply_markup=reply_markup
+    )
+
+
 async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     group_data = firestore_client.get_group(str(chat_id))
@@ -518,25 +546,6 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
         parse_mode="MarkdownV2",
         reply_markup=reply_markup
     )
-
-    # await update.message.reply_animation(
-    #     animation="https://pumpreels-mini-app.netlify.app/rendering.gif",
-    #     caption=caption,
-    #     parse_mode="MarkdownV2",
-    #     reply_markup=keyboard
-    # )
-
-
-# async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-#     query = update.callback_query
-#
-#     user_identifier = query.from_user.username or query.from_user.first_name
-#     msg = await query.message.reply_text(
-#         f"@{user_identifier}, please reply to this message with an image from your camera roll.",
-#         reply_markup=ForceReply(selective=True, input_field_placeholder="Attach your image here")
-#     )
-#     context.user_data["image_prompt_message_id"] = msg.message_id
-#     return IMAGE
 
 
 async def handle_group_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -749,9 +758,37 @@ async def telegram_webhook(request: Request):
 async def radom_webhook(request: Request):
     radom_data = await request.json()
     logger.info(f"Received Radom Webhook: {radom_data}")
-    # VERIFY WEBHOOK VERIFICATION KEY
-    # get the group id from metadata
-    # add the credits to the group document in Firestore
+
+    event_type = radom_data.get("eventType")
+
+    if event_type == "managedPayment":
+        try:
+            firestore_client.create_transaction(radom_data)
+            logger.info("✅ Transaction document created.")
+        except Exception as e:
+            logger.error(f"❌ Failed to create transaction: {e}")
+    elif event_type == "paymentTransactionConfirmed":
+        try:
+            event_data = radom_data.get("eventData", {}).get("paymentTransactionConfirmed", {})
+            transaction_hash = event_data.get("transactionHash")
+            if not transaction_hash:
+                logger.warning("⚠️ No transactionHash found.")
+                return {"ok": False}
+
+            result = firestore_client.confirm_transaction_by_tx_hash(transaction_hash)
+
+            if isinstance(result, str) and result.startswith("-"):  # group_id is returned
+                await send_group_mini_app_card(result)
+                logger.info(f"✅ Confirmed and notified group {result}")
+            elif result == "already_confirmed":
+                logger.info(f"⚠️ Transaction {transaction_hash} was already confirmed.")
+            else:
+                logger.warning(f"❌ No transaction found for hash {transaction_hash}")
+
+        except Exception as e:
+            logger.error(f"❌ Error in paymentTransactionConfirmed handler: {e}")
+    else:
+        logger.info(f"Unhandled Radom event type: {event_type}")
 
     return {"ok": True}
 
