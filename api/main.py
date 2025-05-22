@@ -747,7 +747,8 @@ app.add_middleware(
 # logger.info('\n==========\n')
 @app.post("/webhook")
 async def telegram_webhook(request: Request):
-    logger.info(request.json())
+    update_json = await request.json()
+    logger.info(update_json)
     header_token = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
     logger.info(header_token)
 
