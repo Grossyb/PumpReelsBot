@@ -61,13 +61,14 @@ firestore_client = FirestoreClient()
 gcs_client = GCSClient(bucket_name="pumpreels_files")
 pika_client = PikaClient()
 
-TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN')
-if not TELEGRAM_TOKEN:
-    logger.error("TELEGRAM_TOKEN not set!")
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
+TELEGRAM_SECRET_TOKEN = os.environ.get("TELEGRAM_SECRET_TOKEN")
+if not TELEGRAM_BOT_TOKEN:
+    logger.error("TELEGRAM_BOT_TOKEN not set!")
     exit(1)
 
 # Create the Telegram Application (PTB v20+)
-application = Application.builder().token(TELEGRAM_TOKEN).build()
+application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
 
 
@@ -393,7 +394,7 @@ async def credits(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # 🔒 Check 1: If this is a group/supergroup, reject it
     if chat.type in [ChatType.GROUP, ChatType.SUPERGROUP]:
         await message.reply_text(
-            f"⚠️ Please have the *admin of {chat.title}* top up your credits.",
+            f"⚠️ Please have the *admin of {chat.title}* top up your credits in a private chat with @pumpreelsbot.",
             parse_mode="Markdown"
         )
         return ConversationHandler.END
@@ -741,12 +742,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# MARK: GET RID OF THIS EVENTUALLY
+# logger.info(update_json)
+# logger.info('\n==========\n')
 @app.post("/webhook")
 async def telegram_webhook(request: Request):
+    header_token = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
+
+    if header_token != TELEGRAM_SECRET_TOKEN:
+        raise HTTPException(status_code=403, detail="Invalid secret token")
+
     update_json = await request.json()
-    # MARK: GET RID OF THIS EVENTUALLY
-    # logger.info(update_json)
-    # logger.info('\n==========\n')
     await handle_new_group_update(update_json)
 
     update = Update.de_json(update_json, application.bot)
