@@ -747,7 +747,9 @@ app.add_middleware(
 # logger.info('\n==========\n')
 @app.post("/webhook")
 async def telegram_webhook(request: Request):
+    logger.info(request.json())
     header_token = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
+    logger.info(header_token)
 
     if header_token != TELEGRAM_SECRET_TOKEN:
         raise HTTPException(status_code=403, detail="Invalid secret token")
