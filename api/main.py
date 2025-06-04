@@ -92,7 +92,7 @@ def _verify_init_data(init_data: str) -> dict:
     if "user" in vals:
         logger.info('HELP!')
         try:
-            logger.info('HELP2')
+            logger.info(vals['user'])
             vals["user"] = json.loads(vals["user"])
         except Exception:
             logger.info('HELP3')
