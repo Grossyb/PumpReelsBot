@@ -91,10 +91,7 @@ def _verify_init_data(init_data: str) -> dict:
         return None
 
     if "user" in vals:
-        logger.info('HELP!')
         try:
-            logger.info(vals['user'])
-            logger.info(type(vals['user']))
             vals["user"] = json.loads(vals["user"])
         except Exception as e:
             logger.error('Error getting user: {e}'.format(e))
@@ -874,7 +871,9 @@ async def get_group(
     group_id: str = Form(...),
     tg_data: dict = Depends(require_telegram)
 ):
+    logger.info('GETTING GROUP')
     group_data = firestore_client.get_group(group_id)
+    logger.info(group_data)
     return group_data
 
 
