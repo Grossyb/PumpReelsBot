@@ -9,7 +9,7 @@ import base64
 import requests
 import hmac
 import hashlib
-import urllib.parse
+from urllib.parse import unquote
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Header, Depends, UploadFile, File, Form, Query, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
