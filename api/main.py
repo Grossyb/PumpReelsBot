@@ -540,18 +540,19 @@ async def send_group_mini_app_card(group_id: str):
     group_data = firestore_client.get_group(group_id)
     if not group_data:
         return
+    doc_id = group_data.get('doc_id')
 
     caption = (
         f"{group_data.get('title')} has {group_data.get('credits')} credits remaining\n"
         f"Generate your AI Video with our Mini App\\\n"
-        f"📱 [Open Mini App](https://t.me/pumpreelsbot/pumpreelsapp?startapp={group_id})\n\n"
+        f"📱 [Open Mini App](https://t.me/pumpreelsbot/pumpreelsapp?startapp={doc_id})\n\n"
         f"OR ENTER\n"
         f"\\/generate\\_video \\[your prompt\\] and attach an image to create your AI video instantly\\\n\n"
         f"Powered by \\@PumpReelsBot"
     )
 
     keyboard = [
-        [InlineKeyboardButton(text="📱Open Mini App", url=f"https://t.me/pumpreelsbot/pumpreelsapp?startapp={group_id}")]
+        [InlineKeyboardButton(text="📱Open Mini App", url=f"https://t.me/pumpreelsbot/pumpreelsapp?startapp={doc_id}")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -567,10 +568,11 @@ async def send_group_mini_app_card(group_id: str):
 async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     group_data = firestore_client.get_group(str(chat_id))
+    doc_id = group_data.get('doc_id')
     caption = (
         f"{group_data.get('title')} has {group_data.get('credits')} credits remaining\n"
         f"Generate your AI Video with our Mini App\\\n"
-        f"📱 [Open Mini App](https://t.me/pumpreelsbot/pumpreelsapp?startapp={chat_id})\n\n"
+        f"📱 [Open Mini App](https://t.me/pumpreelsbot/pumpreelsapp?startapp={doc_id})\n\n"
         f"OR ENTER\n"
         f"\\/generate\\_video \\[your prompt\\] and attach an image to create your AI video instantly\\\n\n"
         f"Powered by \\@PumpReelsBot"
@@ -578,7 +580,7 @@ async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_
 
 
     keyboard = [
-        [InlineKeyboardButton(text="📱Open Mini App", url=f"https://t.me/pumpreelsbot/pumpreelsapp?startapp={chat_id}")]
+        [InlineKeyboardButton(text="📱Open Mini App", url=f"https://t.me/pumpreelsbot/pumpreelsapp?startapp={doc_id}")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
