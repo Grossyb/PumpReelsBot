@@ -77,7 +77,6 @@ application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 def _verify_init_data(init_data: str) -> dict:
     logger.info(init_data)
     params = dict(urllib.parse.parse_qsl(init_data, keep_blank_values=True))
-    logger.info(params)
     their_hash = params.pop("hash", None)
     if not their_hash:
         return None
@@ -93,6 +92,7 @@ def _verify_init_data(init_data: str) -> dict:
                         data_check_string.encode(),
                         hashlib.sha256).hexdigest()
 
+    logger.info('DOWN BELOW!!')
     logger.info(f"data_check_string: {data_check_string}")
     logger.info(f"our_hash: {our_hash}")
     logger.info(f"their_hash: {their_hash}")
