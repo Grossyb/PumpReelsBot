@@ -74,19 +74,21 @@ if not TELEGRAM_BOT_TOKEN:
 application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
 
-def _verify_init_data(init_data: str) -> dict:
+def _verify_init_data(init_data: str) -> dict | None:
     vals = {k: unquote(v) for k, v in [s.split('=', 1) for s in init_data.split('&')]}
-    data_check_string = '\n'.join(f"{k}={v}" for k, v in sorted(vals.items()) if k != 'hash')
+    their_hash = vals.pop("hash", None)
+    if not their_hash:
+        return None
+
+    data_check_string = '\n'.join(f"{k}={v}" for k, v in sorted(vals.items()))
 
     secret_key = hmac.new("WebAppData".encode(), TELEGRAM_BOT_TOKEN.encode(), hashlib.sha256).digest()
-    h = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256)
+    our_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
 
-    logger.info('DOWN BELOW!!')
-    logger.info(f"data_check_string: {data_check_string}")
-    logger.info(f"our_hash: {h.hexdigest()}")
-    logger.info(f"their_hash: {vals['hash']}")
-
-    return h.hexdigest() == vals['hash']
+    if hmac.compare_digest(our_hash, their_hash):
+        return vals
+    else:
+        return None
 
 
 async def require_telegram(init_data: str = Header(..., alias="X-TG-INIT-DATA")):
