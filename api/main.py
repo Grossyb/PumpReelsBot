@@ -851,9 +851,36 @@ async def radom_webhook(request: Request):
 
 
 # ENDPOINTS FOR MINI APP
+@app.post("verifyUser")
+async def verify_user(
+    tg_data: dict = Depends(require_telegram)
+):
+    chat_type = tg_data.get("chat_type")
+
+    if chat_type in ("group", "supergroup"):
+        user = tg_data.get("user", {})
+        username = user.get("username")
+        if username:
+            user_identifier = username
+        else:
+            first_name = user.get("first_name", "")
+            last_name = user.get("last_name", "")
+            user_identifier = f"{first_name} {last_name}".strip()
+        return {
+            "is_group": True,
+            "user_identifier": user_identifer
+        }
+    else:
+        return {
+            "is_group": False,
+            "user_identifier": ""
+        }
+
+
 @app.post("/getGroup")
 async def get_group(
     group_id: str = Form(...),
+    tg_data: dict = Depends(require_telegram)
 ):
     group_data = firestore_client.get_group(group_id)
     return group_data
@@ -863,7 +890,7 @@ async def get_group(
 async def generate_video(
     prompt_text: str = Form(...),
     image: UploadFile = File(...),
-    group_id: str = Form(...),
+    doc_id: str = Form(...),
     tg_data: dict = Depends(require_telegram)
 ):
     """
@@ -873,7 +900,7 @@ async def generate_video(
     """
 
     try:
-        firestore_client.decrement_credits(group_id, VIDEO_CREDITS)
+        firestore_client.decrement_credits(doc_id, VIDEO_CREDITS)
     except ValueError as e:
         return JSONResponse(
             status_code=400,
@@ -927,7 +954,8 @@ async def generate_video(
 @app.get("/getVideoStatus")
 async def get_video_status(
     video_id: str,
-    group_id: str
+    doc_id: str,
+    tg_data: dict = Depends(require_telegram)
 ):
     """
     1) Takes a 'video_id' as a query param.
@@ -940,12 +968,6 @@ async def get_video_status(
         logger.error("Error checking video status: %s", e)
         raise HTTPException(status_code=500, detail="Failed to check video status.")
 
-    # PikaClient might return something like:
-    # {
-    #   'status': 'finished',  # or 'queued' / 'started' / 'failed'
-    #   'progress': 100,
-    #   'url': 'https://...'
-    # }
     if not video_data:
         raise HTTPException(status_code=404, detail="Video data not found for that video_id.")
 
@@ -955,12 +977,11 @@ async def get_video_status(
 
     if status in ["failed", "canceled"]:
         try:
-            firestore_client.add_credits(group_id, VIDEO_CREDITS)
-            logger.info("Refunded %s credits to group %s for failed video %s", VIDEO_CREDITS, group_id, video_id)
+            firestore_client.add_credits(doc_id, VIDEO_CREDITS)
+            logger.info("Refunded %s credits to group %s for failed video %s", VIDEO_CREDITS, doc_id, video_id)
         except Exception as e:
-            logger.error("Failed to refund credits to group %s: %s", group_id, e)
+            logger.error("Failed to refund credits to group %s: %s", doc_id, e)
 
-    # If you want to return the entire dictionary:
     return {
         "video_id": video_id,
         "status": status,
@@ -974,7 +995,8 @@ async def send_video(
     group_id: int = Form(...),
     video_url: str = Form(...),
     user_identifier: str = Form(...),
-    prompt_text: str = Form(...)
+    prompt_text: str = Form(...),
+    tg_data: dict = Depends(require_telegram)
 ):
     try:
         await application.bot.send_video(

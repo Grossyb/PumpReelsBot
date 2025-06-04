@@ -100,24 +100,9 @@ class FirestoreClient:
 
         return None
 
-
-    # def create_group(self, data, creator_user_id):
-    #     group_id = str(data['id'])
-    #
-    #     doc_ref = self.group_collection.document(group_id)
-    #     doc_ref.set({
-    #         "title": data['title'],
-    #         "type": data['type'],
-    #         "creator_id": creator_user_id,
-    #         "credits": 0,
-    #         "created_at": Timestamp.now()
-    #     })
-    #
-    #     return doc_ref.id
-
     def create_group(self, data, creator_user_id, creator_username, creator_full_name):
         doc_id = "g_" + uuid.uuid4().hex
-        group_id = str(data['id'])
+        group_id = int(data['id'])
 
         doc_ref = self.group_collection.document(doc_id)
         doc_ref.set({
@@ -143,17 +128,6 @@ class FirestoreClient:
 
         return None
 
-    # def get_group(self, group_id):
-    #     doc_ref = self.group_collection.document(group_id)
-    #     doc = doc_ref.get()
-    #
-    #     if doc.exists:
-    #         data = doc.to_dict()
-    #         data['group_id'] = doc.id
-    #         return data
-    #
-    #     return None
-
     def get_groups_by_creator(self, creator_id):
         query = self.group_collection.where("creator_id", "==", creator_id)
         docs = query.stream()
@@ -161,13 +135,12 @@ class FirestoreClient:
 
         for doc in docs:
             data = doc.to_dict()
-            data['group_id'] = doc.id
             results.append(data)
 
         return results
 
-    def add_credits(self, group_id, amount):
-        doc_ref = self.group_collection.document(group_id)
+    def add_credits(self, doc_id, amount):
+        doc_ref = self.group_collection.document(doc_id)
 
         @firestore.transactional
         def transaction_add(transaction):
@@ -187,8 +160,8 @@ class FirestoreClient:
         transaction_add(transaction)
 
 
-    def decrement_credits(self, group_id, amount):
-        doc_ref = self.group_collection.document(group_id)
+    def decrement_credits(self, doc_id, amount):
+        doc_ref = self.group_collection.document(doc_id)
 
         @firestore.transactional
         def transaction_decrement(transaction):
