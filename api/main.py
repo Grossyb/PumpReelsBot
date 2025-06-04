@@ -1,6 +1,7 @@
 import os
 import io
 import time
+import json
 import asyncio
 import aiofiles
 import logging
@@ -96,7 +97,7 @@ def _verify_init_data(init_data: str) -> dict:
             logger.info(type(vals['user']))
             vals["user"] = json.loads(vals["user"])
         except Exception as e:
-            logger.info('Error getting user: {e}'.format(e))
+            logger.error('Error getting user: {e}'.format(e))
             return None
 
     return vals
