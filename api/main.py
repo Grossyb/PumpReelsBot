@@ -75,12 +75,10 @@ application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
 
 def _verify_init_data(init_data: str) -> dict:
-    logger.info('JON SNOW')
     logger.info(init_data)
     params = dict(urllib.parse.parse_qsl(init_data, keep_blank_values=True))
     logger.info(params)
     their_hash = params.pop("hash", None)
-    logger.info(their_hash)
     if not their_hash:
         return None
 
@@ -94,6 +92,10 @@ def _verify_init_data(init_data: str) -> dict:
     our_hash = hmac.new(secret_key,
                         data_check_string.encode(),
                         hashlib.sha256).hexdigest()
+
+    logger.info(f"data_check_string: {data_check_string}")
+    logger.info(f"our_hash: {our_hash}")
+    logger.info(f"their_hash: {their_hash}")
 
     # constant-time compare
     if not hmac.compare_digest(our_hash, their_hash):
@@ -110,7 +112,6 @@ def _verify_init_data(init_data: str) -> dict:
 
 
 async def require_telegram(init_data: str = Header(..., alias="X-TG-INIT-DATA")):
-    logger.info('TESTING')
     data = _verify_init_data(init_data)
     if data is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
