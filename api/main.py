@@ -75,8 +75,12 @@ application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
 
 def _verify_init_data(init_data: str) -> dict:
+    logger.info('JON SNOW')
+    logger.info(init_data)
     params = dict(urllib.parse.parse_qsl(init_data, keep_blank_values=True))
+    logger.info(params)
     their_hash = params.pop("hash", None)
+    logger.info(their_hash)
     if not their_hash:
         return None
 
@@ -93,17 +97,20 @@ def _verify_init_data(init_data: str) -> dict:
 
     # constant-time compare
     if not hmac.compare_digest(our_hash, their_hash):
+        logger.info("NONE1")
         return None
 
     # 4) freshness check (2-minute TTL is Telegram’s recommendation)
     auth_date = int(params.get("auth_date", "0"))
     if abs(time.time() - auth_date) > 120:
+        logger.info("NONE2")
         return None
 
     return params
 
 
 async def require_telegram(init_data: str = Header(..., alias="X-TG-INIT-DATA")):
+    logger.info('TESTING')
     data = _verify_init_data(init_data)
     if data is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
