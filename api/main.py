@@ -868,11 +868,11 @@ async def verify_user(
 
 @app.post("/getGroup")
 async def get_group(
-    group_id: str = Form(...),
+    doc_id: str = Form(...),
     tg_data: dict = Depends(require_telegram)
 ):
     logger.info('GETTING GROUP')
-    group_data = firestore_client.get_group(group_id)
+    group_data = firestore_client.get_group(doc_id)
     logger.info(group_data)
     return group_data
 
