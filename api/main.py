@@ -75,42 +75,18 @@ application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
 
 def _verify_init_data(init_data: str) -> dict:
-    logger.info(init_data)
-    params = dict(urllib.parse.parse_qsl(init_data, keep_blank_values=True))
-    their_hash = params.pop("hash", None)
-    if not their_hash:
-        return None
+    vals = {k: unquote(v) for k, v in [s.split('=', 1) for s in init_data.split('&')]}
+    data_check_string = '\n'.join(f"{k}={v}" for k, v in sorted(vals.items()) if k != 'hash')
 
-    # 1) build data_check_string
-    allowed_keys = {"auth_date", "user"}
-    filtered_params = {k: v for k, v in params.items() if k in allowed_keys}
-    data_check_string = "\n".join(f"{k}={params[k]}" for k in sorted(filtered_params))
-
-    # 2) secret key = sha256(bot_token)
-    secret_key = hashlib.sha256(TELEGRAM_BOT_TOKEN.encode()).digest()
-
-    # 3) our hash
-    our_hash = hmac.new(secret_key,
-                        data_check_string.encode(),
-                        hashlib.sha256).hexdigest()
+    secret_key = hmac.new("WebAppData".encode(), TELEGRAM_BOT_TOKEN.encode(), hashlib.sha256).digest()
+    h = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256)
 
     logger.info('DOWN BELOW!!')
     logger.info(f"data_check_string: {data_check_string}")
-    logger.info(f"our_hash: {our_hash}")
-    logger.info(f"their_hash: {their_hash}")
+    logger.info(f"our_hash: {h.hexdigest()}")
+    logger.info(f"their_hash: {vals['hash']}")
 
-    # constant-time compare
-    if not hmac.compare_digest(our_hash, their_hash):
-        logger.info("NONE1")
-        return None
-
-    # 4) freshness check (2-minute TTL is Telegram’s recommendation)
-    auth_date = int(params.get("auth_date", "0"))
-    if abs(time.time() - auth_date) > 120:
-        logger.info("NONE2")
-        return None
-
-    return params
+    return h.hexdigest() == vals['hash']
 
 
 async def require_telegram(init_data: str = Header(..., alias="X-TG-INIT-DATA")):
