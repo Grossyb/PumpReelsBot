@@ -86,12 +86,16 @@ def _verify_init_data(init_data: str) -> dict:
     our_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
 
     if not hmac.compare_digest(our_hash, their_hash):
+        logger.info('CERSEI')
         return None
 
     if "user" in vals:
+        logger.info('HELP!')
         try:
+            logger.info('HELP2')
             vals["user"] = json.loads(vals["user"])
         except Exception:
+            logger.info('HELP3')
             return None
 
     return vals
