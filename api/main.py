@@ -7,7 +7,7 @@ import logging
 import uvicorn
 import base64
 import requests
-import hmac,
+import hmac
 import hashlib
 import urllib.parse
 from contextlib import asynccontextmanager
