@@ -1,6 +1,7 @@
 from firebase_admin import credentials, firestore, storage, initialize_app
 from pandas import Timestamp
 import firebase_admin
+import uuid
 
 
 class FirestoreClient:
@@ -100,14 +101,32 @@ class FirestoreClient:
         return None
 
 
-    def create_group(self, data, creator_user_id):
+    # def create_group(self, data, creator_user_id):
+    #     group_id = str(data['id'])
+    #
+    #     doc_ref = self.group_collection.document(group_id)
+    #     doc_ref.set({
+    #         "title": data['title'],
+    #         "type": data['type'],
+    #         "creator_id": creator_user_id,
+    #         "credits": 0,
+    #         "created_at": Timestamp.now()
+    #     })
+    #
+    #     return doc_ref.id
+
+    def create_group(self, data, creator_user_id, creator_username, creator_full_name):
+        doc_id = "g_" + uuid.uuid4().hex
         group_id = str(data['id'])
 
-        doc_ref = self.group_collection.document(group_id)
+        doc_ref = self.group_collection.document(doc_id)
         doc_ref.set({
             "title": data['title'],
             "type": data['type'],
+            "group_id": group_id,
             "creator_id": creator_user_id,
+            "creator_username": creator_username,
+            "creator_full_name": creator_full_name,
             "credits": 0,
             "created_at": Timestamp.now()
         })
@@ -115,15 +134,25 @@ class FirestoreClient:
         return doc_ref.id
 
     def get_group(self, group_id):
-        doc_ref = self.group_collection.document(group_id)
-        doc = doc_ref.get()
+        query = self.group_collection.where('group_id', '==', group_id).limit(1).stream()
 
-        if doc.exists:
+        for doc in query:
             data = doc.to_dict()
-            data['group_id'] = doc.id
+            data['doc_id'] = doc.id  # optional: if you still want to know the document ID
             return data
 
         return None
+
+    # def get_group(self, group_id):
+    #     doc_ref = self.group_collection.document(group_id)
+    #     doc = doc_ref.get()
+    #
+    #     if doc.exists:
+    #         data = doc.to_dict()
+    #         data['group_id'] = doc.id
+    #         return data
+    #
+    #     return None
 
     def get_groups_by_creator(self, creator_id):
         query = self.group_collection.where("creator_id", "==", creator_id)

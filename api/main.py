@@ -7,8 +7,11 @@ import logging
 import uvicorn
 import base64
 import requests
+import hmac,
+import hashlib
+import urllib.parse
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, UploadFile, File, Form, Query, HTTPException
+from fastapi import FastAPI, Request, Header, Depends, UploadFile, File, Form, Query, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from storage.firestore_client import FirestoreClient
 from storage.gcs_client import GCSClient
@@ -70,6 +73,42 @@ if not TELEGRAM_BOT_TOKEN:
 # Create the Telegram Application (PTB v20+)
 application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
+
+def _verify_init_data(init_data: str) -> dict:
+    params = dict(urllib.parse.parse_qsl(init_data, keep_blank_values=True))
+    their_hash = params.pop("hash", None)
+    if not their_hash:
+        return None
+
+    # 1) build data_check_string
+    data_check_string = "\n".join(f"{k}={params[k]}" for k in sorted(params))
+
+    # 2) secret key = sha256(bot_token)
+    secret_key = hashlib.sha256(TELEGRAM_BOT_TOKEN.encode()).digest()
+
+    # 3) our hash
+    our_hash = hmac.new(secret_key,
+                        data_check_string.encode(),
+                        hashlib.sha256).hexdigest()
+
+    # constant-time compare
+    if not hmac.compare_digest(our_hash, their_hash):
+        return None
+
+    # 4) freshness check (2-minute TTL is Telegram’s recommendation)
+    auth_date = int(params.get("auth_date", "0"))
+    if abs(time.time() - auth_date) > 120:
+        return None
+
+    return params
+
+
+async def require_telegram(init_data: str = Header(..., alias="X-TG-INIT-DATA")):
+    data = _verify_init_data(init_data)
+    if data is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Invalid Telegram signature")
+    return data
 
 
 async def get_chat_administrators(chat_id: int) -> list:
@@ -161,9 +200,11 @@ async def handle_new_group_update(update_json):
         for admin in admins:
             if admin.status == 'creator' or admin.can_manage_chat:
                 creator_user_id = admin.user.id
+                creator_username = admin.user.username
+                creator_full_name = admin.user.full_name
                 await dm_admin_to_buy_credits(creator_user_id, group_title, group_chat_id)
                 break
-        doc_id = firestore_client.create_group(data=group, creator_user_id=creator_user_id)
+        doc_id = firestore_client.create_group(data=group, creator_user_id=creator_user_id, creator_username=creator_username, creator_full_name=creator_full_name)
         logger.info(f"Group added to Firestore: {doc_id}")
     else:
         logger.info("New bot added is not pumpreelsbot. No action taken.")
@@ -747,10 +788,7 @@ app.add_middleware(
 # logger.info('\n==========\n')
 @app.post("/webhook")
 async def telegram_webhook(request: Request):
-    update_json = await request.json()
-    logger.info(update_json)
     header_token = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
-    logger.info(header_token)
 
     if header_token != TELEGRAM_SECRET_TOKEN:
         raise HTTPException(status_code=403, detail="Invalid secret token")
@@ -815,7 +853,8 @@ async def get_group(
 async def generate_video(
     prompt_text: str = Form(...),
     image: UploadFile = File(...),
-    group_id: str = Form(...)
+    group_id: str = Form(...),
+    tg_data: dict = Depends(require_telegram)
 ):
     """
     1) Receives an image + prompt text.
