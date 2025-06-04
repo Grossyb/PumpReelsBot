@@ -284,7 +284,7 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int, user_ident
             return None
 
         # Sleep briefly before polling again
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(1.0)
 
 # ------------------
 # Helper function to process the video generation.
@@ -851,7 +851,7 @@ async def radom_webhook(request: Request):
 
 
 # ENDPOINTS FOR MINI APP
-@app.post("verifyUser")
+@app.post("/verifyUser")
 async def verify_user(
     tg_data: dict = Depends(require_telegram)
 ):
