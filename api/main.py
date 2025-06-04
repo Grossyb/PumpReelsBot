@@ -85,10 +85,16 @@ def _verify_init_data(init_data: str) -> dict:
     secret_key = hmac.new("WebAppData".encode(), TELEGRAM_BOT_TOKEN.encode(), hashlib.sha256).digest()
     our_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
 
-    if hmac.compare_digest(our_hash, their_hash):
-        return vals
-    else:
+    if not hmac.compare_digest(our_hash, their_hash):
         return None
+
+    if "user" in vals:
+        try:
+            vals["user"] = json.loads(vals["user"])
+        except Exception:
+            return None
+
+    return vals
 
 
 async def require_telegram(init_data: str = Header(..., alias="X-TG-INIT-DATA")):
@@ -846,7 +852,7 @@ async def verify_user(
             user_identifier = f"{first_name} {last_name}".strip()
         return {
             "is_group": True,
-            "user_identifier": user_identifer
+            "user_identifier": user_identifier
         }
     else:
         return {
