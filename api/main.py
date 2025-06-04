@@ -74,7 +74,7 @@ if not TELEGRAM_BOT_TOKEN:
 application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
 
-def _verify_init_data(init_data: str) -> dict | None:
+def _verify_init_data(init_data: str) -> dict:
     vals = {k: unquote(v) for k, v in [s.split('=', 1) for s in init_data.split('&')]}
     their_hash = vals.pop("hash", None)
     if not their_hash:
