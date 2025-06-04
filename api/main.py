@@ -207,7 +207,9 @@ async def handle_new_group_update(update_json):
         logger.info("New bot added is not pumpreelsbot. No action taken.")
 
 
-async def get_video_url(video_id: str, chat_id: int, message_id: int, user_identifier: str) -> str:
+async def get_video_url(video_id: str, group_data: dict, message_id: int, user_identifier: str) -> str:
+    chat_id = group_data.get('group_id')
+    doc_id = group_data.get('doc_id')
     start_time = time.monotonic()
     max_wait_seconds = 300  # 5 minutes
     while time.monotonic() - start_time < max_wait_seconds:
@@ -256,7 +258,7 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int, user_ident
 
             elif status in ['failed', 'canceled']:
                 try:
-                    firestore_client.add_credits(str(chat_id), VIDEO_CREDITS)
+                    firestore_client.add_credits(doc_id, VIDEO_CREDITS)
                     logger.info(f"Refunded {VIDEO_CREDITS} credit to group %s", group_id)
                 except Exception as e:
                     logger.error("Failed to refund credit to %s: %s", group_id, e)
@@ -278,13 +280,14 @@ async def get_video_url(video_id: str, chat_id: int, message_id: int, user_ident
 # This function downloads the image, encodes it, calls the runway API,
 # deletes temporary files and bot messages, and sends the final video.
 # ------------------
-async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prompt_text: str):
+async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prompt_text: str, group_data: dict):
     chat_id = update.effective_chat.id
     user_identifier = update.message.from_user.username or update.message.from_user.first_name
 
     # MARK: DECREMENT CREDITS
     try:
-        firestore_client.decrement_credits(str(chat_id), VIDEO_CREDITS)
+        doc_id = group_data.get('doc_id')
+        firestore_client.decrement_credits(doc_id, VIDEO_CREDITS)
     except ValueError as e:
         await update.message.reply_text(
             f"⚠️ Your group ran out of credits!"
@@ -320,7 +323,7 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, prom
         )
         video_id = pika_result.get('video_id', '')
         logger.info("Video started with id: %s", video_id)
-        video_url = await get_video_url(video_id, msg_chat_id, msg_id, user_identifier)
+        video_url = await get_video_url(video_id, group_data, msg_id, user_identifier)
     except Exception as e:
         logger.error("Error generating video: %s", e)
 
@@ -482,7 +485,7 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
         await update.message.reply_text("Use this command in a group chat!")
         return ConversationHandler.END
 
-    group_data = firestore_client.get_group(str(chat_id))
+    group_data = firestore_client.get_group(chat_id)
 
     if group_data is None:
         await update.message.reply_text("Your group is not registered. Please contact PumpReels for help.")
@@ -524,13 +527,12 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
         await send_open_mini_app_card(update, context)
         return
 
-    # 3) We have a photo and the user text -> proceed to process_video
-    photo = update.message.photo[-1]  # the largest resolution photo
+    photo = update.message.photo[-1]
     file_id = photo.file_id
     context.user_data["file_id"] = file_id
 
     # Now call process_video with the user prompt
-    await process_video(update, context, prompt_text)
+    await process_video(update, context, prompt_text, group_data)
 
 
 async def send_group_mini_app_card(group_id: str):
@@ -564,7 +566,7 @@ async def send_group_mini_app_card(group_id: str):
 
 async def send_open_mini_app_card(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
-    group_data = firestore_client.get_group(str(chat_id))
+    group_data = firestore_client.get_group(chat_id)
     doc_id = group_data.get('doc_id')
     caption = (
         f"{group_data.get('title')} has {group_data.get('credits')} credits remaining\n"

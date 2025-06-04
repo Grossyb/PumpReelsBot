@@ -130,7 +130,7 @@ class FirestoreClient:
 
         for doc in query:
             data = doc.to_dict()
-            data['doc_id'] = doc.id  # optional: if you still want to know the document ID
+            data['doc_id'] = doc.id
             return data
 
         return None
