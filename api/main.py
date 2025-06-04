@@ -93,9 +93,10 @@ def _verify_init_data(init_data: str) -> dict:
         logger.info('HELP!')
         try:
             logger.info(vals['user'])
+            logger.info(type(vals['user']))
             vals["user"] = json.loads(vals["user"])
-        except Exception:
-            logger.info('HELP3')
+        except Exception as e:
+            logger.info('Error getting user: {e}'.format(e))
             return None
 
     return vals
