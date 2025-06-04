@@ -82,7 +82,9 @@ def _verify_init_data(init_data: str) -> dict:
         return None
 
     # 1) build data_check_string
-    data_check_string = "\n".join(f"{k}={params[k]}" for k in sorted(params))
+    allowed_keys = {"auth_date", "user"}
+    filtered_params = {k: v for k, v in params.items() if k in allowed_keys}
+    data_check_string = "\n".join(f"{k}={params[k]}" for k in sorted(filtered_params))
 
     # 2) secret key = sha256(bot_token)
     secret_key = hashlib.sha256(TELEGRAM_BOT_TOKEN.encode()).digest()
