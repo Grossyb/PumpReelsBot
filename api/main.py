@@ -871,9 +871,7 @@ async def get_group(
     doc_id: str = Form(...),
     tg_data: dict = Depends(require_telegram)
 ):
-    logger.info('GETTING GROUP')
-    group_data = firestore_client.get_group(doc_id)
-    logger.info(group_data)
+    group_data = firestore_client.get_group_by_id(doc_id)
     return group_data
 
 

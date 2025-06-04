@@ -118,6 +118,13 @@ class FirestoreClient:
 
         return doc_ref.id
 
+    def get_group_by_id(self, doc_id):
+        doc = self.group_collection.document(doc_id).get()
+        if doc.exists:
+            return doc.to_dict()
+        else:
+            return None
+
     def get_group(self, group_id):
         query = self.group_collection.where('group_id', '==', group_id).limit(1).stream()
 
