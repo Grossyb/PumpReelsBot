@@ -526,8 +526,10 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
     file_id = photo.file_id
     context.user_data["file_id"] = file_id
 
-    await process_video(update, context, prompt_text, group_data)
+    asyncio.create_task(process_video(update, context, prompt_text, group_data))
 
+    return ConversationHandler.END
+    # await process_video(update, context, prompt_text, group_data)
 
 
 async def send_group_mini_app_card(group_id: str):
