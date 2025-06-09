@@ -76,7 +76,6 @@ application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
 
 def _verify_init_data(init_data: str) -> dict:
-    logger.info(init_data)
     vals = {k: unquote(v) for k, v in [s.split('=', 1) for s in init_data.split('&')]}
     their_hash = vals.pop("hash", None)
     if not their_hash:
@@ -88,7 +87,6 @@ def _verify_init_data(init_data: str) -> dict:
     our_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
 
     if not hmac.compare_digest(our_hash, their_hash):
-        logger.info('CERSEI')
         return None
 
     if "user" in vals:
@@ -479,6 +477,8 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
     of an attached photo. If missing image/text, send a fallback with a "rich card" that
     links to the mini app.
     """
+    TELEGRAM_CAPTION_LIMIT = 1024
+
     chat = update.effective_chat
     chat_id = chat.id
 
@@ -487,13 +487,11 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
         return ConversationHandler.END
 
     group_data = firestore_client.get_group(chat_id)
-
     if group_data is None:
         await update.message.reply_text("Your group is not registered. Please contact PumpReels for help.")
         return ConversationHandler.END
 
     credits = group_data.get('credits', 0)
-
     if credits == 0 or credits < VIDEO_CREDITS:
         await update.message.reply_text(
             f"⚠️ Your group has {credits} credits left.\n"
@@ -501,39 +499,35 @@ async def generate_video_command(update: Update, context: ContextTypes.DEFAULT_T
         )
         return ConversationHandler.END
 
-    # 1) Check if user posted a photo.
-    #    If the user typed `/generate_video` + text in a text-only message, there's no photo -> fallback.
-    #    We expect a single message that has BOTH photo + caption (the command plus user text).
+    # Check for image attachment
     if not update.message or not update.message.photo:
-        # Missing the photo -> fallback
         await send_open_mini_app_card(update, context)
         return
 
-    # 2) Extract the text from the photo caption (where the user typed `/generate_video ...`).
-    #    - update.message.caption might look like "/generate_video my text here"
-    #    - We want to parse out "my text here"
-    caption = update.message.caption or ""  # fallback empty string if somehow missing
-    pieces = caption.split(None, 1)  # split into two parts: command and the rest
+    caption = update.message.caption or ""
+    pieces = caption.split(None, 1)  # split command and user input
     if len(pieces) < 2:
-        # Means they only typed "/generate_video" with no extra text
         await send_open_mini_app_card(update, context)
         return
 
-    # pieces[0] == "/generate_video"
-    # pieces[1] == "my text here"
     prompt_text = pieces[1].strip()
-    logger.info(prompt_text)
     if not prompt_text:
-        # no user text
         await send_open_mini_app_card(update, context)
         return
+
+    if len(prompt_text) > TELEGRAM_CAPTION_LIMIT:
+        await update.message.reply_text(
+            f"⚠️ Your caption is too long ({len(prompt_text)} characters).\n"
+            f"Please shorten it to under {TELEGRAM_CAPTION_LIMIT} characters and try again."
+        )
+        return ConversationHandler.END
 
     photo = update.message.photo[-1]
     file_id = photo.file_id
     context.user_data["file_id"] = file_id
 
-    # Now call process_video with the user prompt
     await process_video(update, context, prompt_text, group_data)
+
 
 
 async def send_group_mini_app_card(group_id: str):
