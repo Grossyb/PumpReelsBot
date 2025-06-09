@@ -604,7 +604,7 @@ async def handle_group_selection(update: Update, context: ContextTypes.DEFAULT_T
         return ConversationHandler.END
 
     group_id = data.replace("select_chat_", "")
-    group_data = firestore_client.get_group(group_id)
+    group_data = firestore_client.get_group_by_id(group_id)
     if not group_data:
         await query.message.reply_text("❌ Group not found or deleted.")
         return ConversationHandler.END
